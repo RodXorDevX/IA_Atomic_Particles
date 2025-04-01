@@ -5,9 +5,7 @@ Este proyecto simula la creación de partículas subatómicas, específicamente 
 ## Estructura del Proyecto
 
 - `src/`: Contiene el código fuente del proyecto.
-  - `particles.js`: Define las clases para quarks, protones y neutrones.
-  - `forces.js`: Define las clases para las fuerzas de interacción.
-  - `index.js`: Archivo principal que ejecuta la simulación.
+
 
 ## Instalación
 
