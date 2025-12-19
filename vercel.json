@@ -4,17 +4,10 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": ".",
   "installCommand": "npm install",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/pkg/(.*)",
-      "dest": "/pkg/$1",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/(.*)",
+      "destination": "/$1"
     }
   ],
   "headers": [
