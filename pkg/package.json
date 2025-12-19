@@ -5,13 +5,11 @@
   "files": [
     "atomic_particles_simulation_bg.wasm",
     "atomic_particles_simulation.js",
-    "atomic_particles_simulation_bg.js",
     "atomic_particles_simulation.d.ts"
   ],
   "main": "atomic_particles_simulation.js",
   "types": "atomic_particles_simulation.d.ts",
   "sideEffects": [
-    "./atomic_particles_simulation.js",
     "./snippets/*"
   ]
 }
