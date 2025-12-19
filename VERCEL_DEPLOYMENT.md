@@ -122,8 +122,33 @@ Esta guía explica cómo desplegar la aplicación de simulación de partículas 
 - **Output Directory**: `./`
 - **Install Command**: `npm install`
 
-### Environment Variables (si es necesario)
-No se requieren variables de entorno especiales para esta aplicación.
+### Environment Variables
+
+Aunque la aplicación funciona sin variables de entorno especiales, puedes configurar las siguientes opcionales en el dashboard de Vercel:
+
+#### Variables Recomendadas para Producción
+```bash
+# Analytics (opcional)
+VERCEL_ANALYTICS=true
+
+# Configuración de aplicación
+TARGET_FPS=60
+MAX_CANVAS_WIDTH=1920
+MAX_CANVAS_HEIGHT=1080
+```
+
+#### Variables para Desarrollo
+```bash
+# Debug (solo para previews)
+DEBUG_MODE=false
+SHOW_PERFORMANCE=false
+```
+
+#### Cómo configurar en Vercel:
+1. Ve a tu proyecto en Vercel
+2. Settings → Environment Variables
+3. Añade las variables necesarias
+4. Redeploy automáticamente
 
 ## 🔍 Verificación del Despliegue
 

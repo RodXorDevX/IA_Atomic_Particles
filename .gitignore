@@ -32,8 +32,17 @@ wasm-pack.log
 *.swo
 *~
 Thumbs.db
+
+# Variables de entorno
 .env.local
 .env.*.local
+.env.production
+.env.staging
+
+# Excepciones (NO ignorar)
+!.env.example
+
+# Otros archivos temporales
 *.ntvs*
 *.njsproj
 *.sln
