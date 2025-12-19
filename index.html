@@ -449,11 +449,37 @@
 
         async function initWasm() {
             try {
+                console.log('🚀 Iniciando carga de WebAssembly...');
+
+                // Verificar si estamos en Vercel o local
+                const isVercel = window.location.hostname.includes('vercel.app');
+                console.log('🌐 Entorno:', isVercel ? 'Vercel' : 'Local');
+
+                // Verificar disponibilidad de archivos WebAssembly
+                console.log('🔍 Verificando archivos WebAssembly...');
+                try {
+                    const response = await fetch('./pkg/atomic_particles_simulation_bg.wasm');
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    console.log('✅ Archivo .wasm accesible');
+                } catch (error) {
+                    console.error('❌ Error accediendo al archivo .wasm:', error);
+                    throw error;
+                }
+
                 // Usar la inicialización estándar de wasm-bindgen
-                const { SimulationEngine, default: init } = await import('./pkg/atomic_particles_simulation.js');
+                console.log('📦 Cargando módulo WebAssembly...');
+                const moduleUrl = new URL('./pkg/atomic_particles_simulation.js', window.location.href).href;
+                console.log('🔗 URL del módulo:', moduleUrl);
+
+                const { SimulationEngine, default: init } = await import(moduleUrl);
+                console.log('✅ Módulo cargado exitosamente');
 
                 // Inicializar el módulo WebAssembly
+                console.log('🔧 Inicializando WebAssembly...');
                 await init();
+                console.log('✅ WebAssembly inicializado correctamente');
 
                 canvas = document.getElementById('particleCanvas');
                 ctx = canvas.getContext('2d');
