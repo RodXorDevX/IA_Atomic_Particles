@@ -31,7 +31,7 @@
             flex-wrap: wrap;
             gap: 15px;
             align-items: flex-start;
-            max-height: 216px;
+            max-height: 400px;
             overflow-x: auto;
             overflow-y: auto;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -434,12 +434,18 @@
             margin: 4px 0;
         }
     </style>
-  <script type="module">
+    <script type="module">
         let engine = null;
         let canvas = null;
         let ctx = null;
         let animationId = null;
         let isRunning = false;
+        let lastFrameTime = 0;
+        let frameCount = 0;
+        let fps = 0;
+        let fpsUpdateTime = 0;
+        let animationSpeed = 1; // 0.1 = lento, 20.0 = máximo FPS
+        let physicsUpdateCounter = 0; // Contador separado para física
 
         async function initWasm() {
             try {
@@ -486,15 +492,45 @@
         function animate() {
             if (!isRunning || !engine) return;
 
+            const currentTime = performance.now();
+
+            // Calcular FPS
+            frameCount++;
+            if (currentTime - fpsUpdateTime >= 1000) { // Actualizar cada segundo
+                fps = Math.round(frameCount * 1000 / (currentTime - fpsUpdateTime));
+                document.getElementById('fpsDisplay').textContent = fps;
+                frameCount = 0;
+                fpsUpdateTime = currentTime;
+            }
+
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            engine.update();
-            engine.render(ctx);
+            // Para velocidades altas (>10x), usar múltiples actualizaciones por frame
+            if (animationSpeed > 10) {
+                const updatesPerFrame = Math.floor(animationSpeed / 10);
+                for (let i = 0; i < updatesPerFrame; i++) {
+                    engine.update();
+                }
+            } else {
+                // Para velocidades normales, usar el contador continuo
+                physicsUpdateCounter++;
+                const updateFrequency = Math.max(1, Math.round(10 / animationSpeed));
+                if (physicsUpdateCounter % updateFrequency === 0) {
+                    engine.update();
+                }
+            }
 
+            engine.render(ctx);
             updateInfo();
 
-            animationId = requestAnimationFrame(animate);
+            // Para FPS altos, usar setTimeout en lugar de requestAnimationFrame
+            if (animationSpeed > 5) {
+                const targetInterval = Math.max(1, 1000 / (60 * animationSpeed / 5)); // Permitir hasta 5x la velocidad de RAF
+                setTimeout(animate, targetInterval);
+            } else {
+                animationId = requestAnimationFrame(animate);
+            }
         }
 
         function updateInfo() {
@@ -522,21 +558,39 @@
             const nucleiData = engine.get_nuclei_data();
             const nuclei = JSON.parse(nucleiData);
 
-            // Mostrar elementos químicos detectados
-            const elementCounts = {};
-            nuclei.forEach(nucleus => {
-                const protonCount = nucleus.protons;
-                const elementSymbol = getElementSymbol(protonCount);
-                elementCounts[elementSymbol] = (elementCounts[elementSymbol] || 0) + 1;
-            });
-
+            // Mostrar elementos químicos detectados con información de iones e isótopos
             const nucleiList = document.getElementById('nucleiList');
             nucleiList.innerHTML = '';
 
-            if (Object.keys(elementCounts).length > 0) {
-                Object.entries(elementCounts).forEach(([symbol, count]) => {
+            if (nuclei.length > 0) {
+                nuclei.forEach((nucleus, index) => {
+                    const protonCount = nucleus.protons;
+                    const neutronCount = nucleus.neutrons;
+                    const electronCount = nucleus.electrons;
+                    const elementSymbol = getElementSymbol(protonCount);
+
+                    // Calcular carga iónica
+                    const charge = protonCount - electronCount;
+                    let chargeSymbol = '';
+                    if (charge > 0) {
+                        chargeSymbol = charge === 1 ? '+' : charge + '+';
+                    } else if (charge < 0) {
+                        const absCharge = Math.abs(charge);
+                        chargeSymbol = absCharge === 1 ? '-' : absCharge + '-';
+                    }
+
+                    // Determinar si es isótopo (neutrones diferentes al estándar)
+                    const standardNeutrons = getStandardNeutronCount(protonCount);
+                    const isIsotope = neutronCount !== standardNeutrons;
+                    const isotopeSymbol = isIsotope ? ` (${protonCount + neutronCount})` : '';
+
+                    // Crear etiqueta descriptiva
+                    let label = elementSymbol;
+                    if (chargeSymbol) label += chargeSymbol; // Ion
+                    if (isIsotope) label += isotopeSymbol;   // Isótopo
+
                     const li = document.createElement('li');
-                    li.textContent = `${symbol}: ${count}`;
+                    li.textContent = label;
                     nucleiList.appendChild(li);
                 });
             } else {
@@ -551,9 +605,152 @@
             const symbols = {
                 1: 'H', 2: 'He', 3: 'Li', 4: 'Be', 5: 'B', 6: 'C', 7: 'N', 8: 'O',
                 9: 'F', 10: 'Ne', 11: 'Na', 12: 'Mg', 13: 'Al', 14: 'Si', 15: 'P',
-                16: 'S', 17: 'Cl', 18: 'Ar', 19: 'K', 20: 'Ca', 26: 'Fe', 29: 'Cu', 47: 'Ag'
+                16: 'S', 17: 'Cl', 18: 'Ar', 19: 'K', 20: 'Ca', 21: 'Sc', 22: 'Ti',
+                23: 'V', 24: 'Cr', 25: 'Mn', 26: 'Fe', 27: 'Co', 28: 'Ni', 29: 'Cu',
+                30: 'Zn', 31: 'Ga', 32: 'Ge', 33: 'As', 34: 'Se', 35: 'Br', 36: 'Kr',
+                37: 'Rb', 38: 'Sr', 39: 'Y', 40: 'Zr', 41: 'Nb', 42: 'Mo', 43: 'Tc',
+                44: 'Ru', 45: 'Rh', 46: 'Pd', 47: 'Ag', 48: 'Cd', 49: 'In', 50: 'Sn',
+                51: 'Sb', 52: 'Te', 53: 'I', 54: 'Xe', 55: 'Cs', 56: 'Ba', 57: 'La',
+                58: 'Ce', 59: 'Pr', 60: 'Nd', 61: 'Pm', 62: 'Sm', 63: 'Eu', 64: 'Gd',
+                65: 'Tb', 66: 'Dy', 67: 'Ho', 68: 'Er', 69: 'Tm', 70: 'Yb', 71: 'Lu',
+                72: 'Hf', 73: 'Ta', 74: 'W', 75: 'Re', 76: 'Os', 77: 'Ir', 78: 'Pt',
+                79: 'Au', 80: 'Hg', 81: 'Tl', 82: 'Pb', 83: 'Bi', 84: 'Po', 85: 'At',
+                86: 'Rn', 87: 'Fr', 88: 'Ra', 89: 'Ac', 90: 'Th', 91: 'Pa', 92: 'U',
+                93: 'Np', 94: 'Pu', 95: 'Am', 96: 'Cm', 97: 'Bk', 98: 'Cf', 99: 'Es',
+                100: 'Fm', 101: 'Md', 102: 'No', 103: 'Lr', 104: 'Rf', 105: 'Db',
+                106: 'Sg', 107: 'Bh', 108: 'Hs', 109: 'Mt', 110: 'Ds', 111: 'Rg',
+                112: 'Cn', 113: 'Nh', 114: 'Fl', 115: 'Mc', 116: 'Lv', 117: 'Ts',
+                118: 'Og'
             };
             return symbols[protonCount] || `E${protonCount}`;
+        }
+
+        // Función auxiliar para obtener el número estándar de neutrones
+        function getStandardNeutronCount(protonCount) {
+            // Masa atómica promedio aproximada (número de nucleones)
+            const standardMasses = {
+                1: 1,   // H
+                2: 4,   // He
+                3: 7,   // Li
+                4: 9,   // Be
+                5: 11,  // B
+                6: 12,  // C
+                7: 14,  // N
+                8: 16,  // O
+                9: 19,  // F
+                10: 20, // Ne
+                11: 23, // Na
+                12: 24, // Mg
+                13: 27, // Al
+                14: 28, // Si
+                15: 31, // P
+                16: 32, // S
+                17: 35, // Cl
+                18: 40, // Ar
+                19: 39, // K
+                20: 40, // Ca
+                21: 45, // Sc
+                22: 48, // Ti
+                23: 51, // V
+                24: 52, // Cr
+                25: 55, // Mn
+                26: 56, // Fe
+                27: 59, // Co
+                28: 59, // Ni
+                29: 64, // Cu
+                30: 65, // Zn
+                31: 70, // Ga
+                32: 73, // Ge
+                33: 75, // As
+                34: 79, // Se
+                35: 80, // Br
+                36: 84, // Kr
+                37: 85, // Rb
+                38: 88, // Sr
+                39: 89, // Y
+                40: 91, // Zr
+                41: 93, // Nb
+                42: 96, // Mo
+                43: 98, // Tc
+                44: 101, // Ru
+                45: 103, // Rh
+                46: 106, // Pd
+                47: 108, // Ag
+                48: 112, // Cd
+                49: 115, // In
+                50: 119, // Sn
+                51: 122, // Sb
+                52: 128, // Te
+                53: 127, // I
+                54: 131, // Xe
+                55: 133, // Cs
+                56: 137, // Ba
+                57: 139, // La
+                58: 140, // Ce
+                59: 141, // Pr
+                60: 144, // Nd
+                61: 145, // Pm
+                62: 150, // Sm
+                63: 152, // Eu
+                64: 157, // Gd
+                65: 159, // Tb
+                66: 163, // Dy
+                67: 165, // Ho
+                68: 167, // Er
+                69: 169, // Tm
+                70: 173, // Yb
+                71: 175, // Lu
+                72: 178, // Hf
+                73: 181, // Ta
+                74: 184, // W
+                75: 187, // Re
+                76: 191, // Os
+                77: 193, // Ir
+                78: 195, // Pt
+                79: 197, // Au
+                80: 201, // Hg
+                81: 204, // Tl
+                82: 207, // Pb
+                83: 209, // Bi
+                84: 209, // Po
+                85: 210, // At
+                86: 222, // Rn
+                87: 223, // Fr
+                88: 226, // Ra
+                89: 227, // Ac
+                90: 232, // Th
+                91: 231, // Pa
+                92: 238, // U
+                93: 237, // Np
+                94: 244, // Pu
+                95: 243, // Am
+                96: 247, // Cm
+                97: 247, // Bk
+                98: 251, // Cf
+                99: 252, // Es
+                100: 257, // Fm
+                101: 258, // Md
+                102: 259, // No
+                103: 262, // Lr
+                104: 267, // Rf
+                105: 268, // Db
+                106: 271, // Sg
+                107: 272, // Bh
+                108: 277, // Hs
+                109: 276, // Mt
+                110: 281, // Ds
+                111: 282, // Rg
+                112: 285, // Cn
+                113: 286, // Nh
+                114: 289, // Fl
+                115: 290, // Mc
+                116: 293, // Lv
+                117: 294, // Ts
+                118: 294  // Og
+            };
+
+            const totalNucleons = standardMasses[protonCount] || protonCount;
+            return totalNucleons - protonCount;
         }
 
         window.addSingleParticle = function(type) {
@@ -628,7 +825,70 @@
             if (element) {
                 const neutrons = atomicNumber === 1 ? 0 : Math.floor(atomicNumber * 1.5);
                 const electrons = atomicNumber - charge;
-                engine.add_ion(400 + atomicNumber * 50, 300, atomicNumber, neutrons, electrons, charge);
+
+                // Posición central del canvas
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+
+                // Crear cada partícula con velocidad inicial aleatoria
+                const baseSpeed = 1.0; // Velocidad base
+
+                // Crear protones con velocidad aleatoria
+                for (let i = 0; i < atomicNumber; i++) {
+                    const angle = Math.random() * 2 * Math.PI; // Dirección aleatoria
+                    const speed = baseSpeed + Math.random() * baseSpeed; // Velocidad variable
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+
+                    const offsetX = (Math.random() - 0.5) * 20; // Pequeña dispersión inicial
+                    const offsetY = (Math.random() - 0.5) * 20;
+
+                    engine.add_particle_with_velocity(
+                        centerX + offsetX,
+                        centerY + offsetY,
+                        0, // Tipo: Protón
+                        vx,
+                        vy
+                    );
+                }
+
+                // Crear neutrones con velocidad aleatoria
+                for (let i = 0; i < neutrons; i++) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const speed = baseSpeed + Math.random() * baseSpeed;
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+
+                    const offsetX = (Math.random() - 0.5) * 20;
+                    const offsetY = (Math.random() - 0.5) * 20;
+
+                    engine.add_particle_with_velocity(
+                        centerX + offsetX,
+                        centerY + offsetY,
+                        1, // Tipo: Neutrón
+                        vx,
+                        vy
+                    );
+                }
+
+                // Crear electrones con velocidad aleatoria
+                for (let i = 0; i < electrons; i++) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const speed = baseSpeed * 0.5 + Math.random() * baseSpeed * 0.5; // Electrones más lentos
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed;
+
+                    const offsetX = (Math.random() - 0.5) * 30; // Mayor dispersión para electrones
+                    const offsetY = (Math.random() - 0.5) * 30;
+
+                    engine.add_particle_with_velocity(
+                        centerX + offsetX,
+                        centerY + offsetY,
+                        2, // Tipo: Electrón
+                        vx,
+                        vy
+                    );
+                }
             }
         };
 
@@ -732,6 +992,11 @@
             }
         };
 
+        window.updateAnimationSpeed = function() {
+            animationSpeed = parseFloat(document.getElementById('animationSpeed').value);
+            document.getElementById('animationSpeedValue').textContent = animationSpeed.toFixed(1) + 'x';
+        };
+
         window.loadConfiguration = function() {
             if (!engine) return;
 
@@ -833,7 +1098,71 @@
             51: { symbol: 'Sb', name: 'Antimonio', period: 5, group: 15, color: '#cccccc' },
             52: { symbol: 'Te', name: 'Telurio', period: 5, group: 16, color: '#cccccc' },
             53: { symbol: 'I', name: 'Yodo', period: 5, group: 17, color: '#cccccc' },
-            54: { symbol: 'Xe', name: 'Xenón', period: 5, group: 18, color: '#cccccc' }
+            54: { symbol: 'Xe', name: 'Xenón', period: 5, group: 18, color: '#cccccc' },
+            55: { symbol: 'Cs', name: 'Cesio', period: 6, group: 1, color: '#6666cc' },
+            56: { symbol: 'Ba', name: 'Bario', period: 6, group: 2, color: '#ffcc00' },
+            57: { symbol: 'La', name: 'Lantano', period: 6, group: 3, color: '#cccccc' },
+            58: { symbol: 'Ce', name: 'Cerio', period: 6, group: 4, color: '#cccccc' },
+            59: { symbol: 'Pr', name: 'Praseodimio', period: 6, group: 5, color: '#cccccc' },
+            60: { symbol: 'Nd', name: 'Neodimio', period: 6, group: 6, color: '#cccccc' },
+            61: { symbol: 'Pm', name: 'Prometio', period: 6, group: 7, color: '#cccccc' },
+            62: { symbol: 'Sm', name: 'Samario', period: 6, group: 8, color: '#cccccc' },
+            63: { symbol: 'Eu', name: 'Europio', period: 6, group: 9, color: '#cccccc' },
+            64: { symbol: 'Gd', name: 'Gadolinio', period: 6, group: 10, color: '#cccccc' },
+            65: { symbol: 'Tb', name: 'Terbio', period: 6, group: 11, color: '#cccccc' },
+            66: { symbol: 'Dy', name: 'Disprosio', period: 6, group: 12, color: '#cccccc' },
+            67: { symbol: 'Ho', name: 'Holmio', period: 6, group: 13, color: '#cccccc' },
+            68: { symbol: 'Er', name: 'Erbio', period: 6, group: 14, color: '#cccccc' },
+            69: { symbol: 'Tm', name: 'Tulio', period: 6, group: 15, color: '#cccccc' },
+            70: { symbol: 'Yb', name: 'Iterbio', period: 6, group: 16, color: '#cccccc' },
+            71: { symbol: 'Lu', name: 'Lutecio', period: 6, group: 17, color: '#cccccc' },
+            72: { symbol: 'Hf', name: 'Hafnio', period: 6, group: 4, color: '#cccccc' },
+            73: { symbol: 'Ta', name: 'Tántalo', period: 6, group: 5, color: '#cccccc' },
+            74: { symbol: 'W', name: 'Wolframio', period: 6, group: 6, color: '#cccccc' },
+            75: { symbol: 'Re', name: 'Renio', period: 6, group: 7, color: '#cccccc' },
+            76: { symbol: 'Os', name: 'Osmio', period: 6, group: 8, color: '#cccccc' },
+            77: { symbol: 'Ir', name: 'Iridio', period: 6, group: 9, color: '#cccccc' },
+            78: { symbol: 'Pt', name: 'Platino', period: 6, group: 10, color: '#cccccc' },
+            79: { symbol: 'Au', name: 'Oro', period: 6, group: 11, color: '#cccccc' },
+            80: { symbol: 'Hg', name: 'Mercurio', period: 6, group: 12, color: '#cccccc' },
+            81: { symbol: 'Tl', name: 'Talio', period: 6, group: 13, color: '#cccccc' },
+            82: { symbol: 'Pb', name: 'Plomo', period: 6, group: 14, color: '#cccccc' },
+            83: { symbol: 'Bi', name: 'Bismuto', period: 6, group: 15, color: '#cccccc' },
+            84: { symbol: 'Po', name: 'Polonio', period: 6, group: 16, color: '#cccccc' },
+            85: { symbol: 'At', name: 'Astato', period: 6, group: 17, color: '#cccccc' },
+            86: { symbol: 'Rn', name: 'Radón', period: 6, group: 18, color: '#cccccc' },
+            87: { symbol: 'Fr', name: 'Francio', period: 7, group: 1, color: '#6666cc' },
+            88: { symbol: 'Ra', name: 'Radio', period: 7, group: 2, color: '#ffcc00' },
+            89: { symbol: 'Ac', name: 'Actinio', period: 7, group: 3, color: '#cccccc' },
+            90: { symbol: 'Th', name: 'Torio', period: 7, group: 4, color: '#cccccc' },
+            91: { symbol: 'Pa', name: 'Protactinio', period: 7, group: 5, color: '#cccccc' },
+            92: { symbol: 'U', name: 'Uranio', period: 7, group: 6, color: '#cccccc' },
+            93: { symbol: 'Np', name: 'Neptunio', period: 7, group: 7, color: '#cccccc' },
+            94: { symbol: 'Pu', name: 'Plutonio', period: 7, group: 8, color: '#cccccc' },
+            95: { symbol: 'Am', name: 'Americio', period: 7, group: 9, color: '#cccccc' },
+            96: { symbol: 'Cm', name: 'Curio', period: 7, group: 10, color: '#cccccc' },
+            97: { symbol: 'Bk', name: 'Berkelio', period: 7, group: 11, color: '#cccccc' },
+            98: { symbol: 'Cf', name: 'Californio', period: 7, group: 12, color: '#cccccc' },
+            99: { symbol: 'Es', name: 'Einstenio', period: 7, group: 13, color: '#cccccc' },
+            100: { symbol: 'Fm', name: 'Fermio', period: 7, group: 14, color: '#cccccc' },
+            101: { symbol: 'Md', name: 'Mendelevio', period: 7, group: 15, color: '#cccccc' },
+            102: { symbol: 'No', name: 'Nobelio', period: 7, group: 16, color: '#cccccc' },
+            103: { symbol: 'Lr', name: 'Laurencio', period: 7, group: 17, color: '#cccccc' },
+            104: { symbol: 'Rf', name: 'Rutherfordio', period: 7, group: 4, color: '#cccccc' },
+            105: { symbol: 'Db', name: 'Dubnio', period: 7, group: 5, color: '#cccccc' },
+            106: { symbol: 'Sg', name: 'Seaborgio', period: 7, group: 6, color: '#cccccc' },
+            107: { symbol: 'Bh', name: 'Bohrio', period: 7, group: 7, color: '#cccccc' },
+            108: { symbol: 'Hs', name: 'Hassio', period: 7, group: 8, color: '#cccccc' },
+            109: { symbol: 'Mt', name: 'Meitnerio', period: 7, group: 9, color: '#cccccc' },
+            110: { symbol: 'Ds', name: 'Darmstadtio', period: 7, group: 10, color: '#cccccc' },
+            111: { symbol: 'Rg', name: 'Roentgenio', period: 7, group: 11, color: '#cccccc' },
+            112: { symbol: 'Cn', name: 'Copernicio', period: 7, group: 12, color: '#cccccc' },
+            113: { symbol: 'Nh', name: 'Nihonio', period: 7, group: 13, color: '#cccccc' },
+            114: { symbol: 'Fl', name: 'Flerovio', period: 7, group: 14, color: '#cccccc' },
+            115: { symbol: 'Mc', name: 'Moscovio', period: 7, group: 15, color: '#cccccc' },
+            116: { symbol: 'Lv', name: 'Livermorio', period: 7, group: 16, color: '#cccccc' },
+            117: { symbol: 'Ts', name: 'Tenesino', period: 7, group: 17, color: '#cccccc' },
+            118: { symbol: 'Og', name: 'Oganesón', period: 7, group: 18, color: '#cccccc' }
         };
 
         // Generar tabla periódica
@@ -846,19 +1175,26 @@
                 return;
             }
 
-            // Crear grid de 7 periodos x 18 grupos
-            const grid = Array(7).fill(null).map(() => Array(18).fill(null));
+            // Crear grid principal de 9 periodos x 18 grupos
+            const grid = Array(10).fill(null).map(() => Array(18).fill(null));
 
-            // Ubicar elementos en el grid
+            // Ubicar elementos en el grid con posiciones correctas de la tabla periódica
             for (let [number, element] of Object.entries(periodicTable)) {
-                const { period, group, symbol, color } = element;
-                if (period <= 7 && group <= 18) {
-                    grid[period - 1][group - 1] = { number: parseInt(number), symbol, color };
+                const num = parseInt(number);
+                let { period, group, symbol, color } = element;
+
+                // Mantener posiciones originales para elementos principales
+                // Los lantánidos y actínidos ya están definidos con sus posiciones correctas
+
+                if (period <= 10 && group <= 18 && group > 0) {
+                    grid[period - 1][group - 1] = { number: num, symbol, color, name: element.name };
                 }
             }
 
             // Generar HTML
             let html = '';
+
+            // Períodos 1-7 (principales) - mantener la estructura original
             for (let period = 0; period < 7; period++) {
                 for (let group = 0; group < 18; group++) {
                     const element = grid[period][group];
@@ -872,9 +1208,50 @@
                 }
             }
 
+            // Fila de lantánidos (período 6 - elementos 58-71)
+            html += '<div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 4px 0; border-top: 2px solid #555; padding-top: 8px;">';
+            html += '<div style="background: #333; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #777;">Lantánidos (57-71)</div>';
+
+            // Lantánidos: La(57), Ce(58), Pr(59), Nd(60), Pm(61), Sm(62), Eu(63), Gd(64), Tb(65), Dy(66), Ho(67), Er(68), Tm(69), Yb(70), Lu(71)
+            const lanthanides = [57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71];
+            for (let i = 0; i < 15; i++) {
+                const elementNum = lanthanides[i];
+                if (elementNum && periodicTable[elementNum]) {
+                    const elementData = periodicTable[elementNum];
+                    const tooltip = `${elementNum}: ${elementData.symbol} - ${elementData.name} (Lantánido)`;
+                    html += `<button onclick="addElement(${elementNum})" title="${tooltip}" style="background: ${elementData.color}; color: #000; border: 1px solid #555; font-size: 9px; font-weight: bold; padding: 3px 1px; margin: 0; min-width: 22px; height: 22px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">${elementData.symbol}</button>`;
+                } else {
+                    html += '<div style="background: #222; border: 1px solid #333; min-height: 22px;"></div>';
+                }
+            }
+            html += '<div style="background: #222; border: 1px solid #333;"></div>';
+            html += '<div style="background: #222; border: 1px solid #333;"></div>';
+            html += '</div>';
+
+            // Fila de actínidos (período 7 - elementos 89-103 y elementos pesados 104-118)
+            html += '<div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; margin: 4px 0;">';
+            html += '<div style="background: #333; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold;">Actínidos</div>';
+
+            // Actínidos: Ac(89), Th(90), Pa(91), U(92), Np(93), Pu(94), Am(95), Cm(96), Bk(97), Cf(98), Es(99), Fm(100), Md(101), No(102), Lr(103)
+            // Elementos pesados: Rf(104), Db(105), Sg(106), Bh(107), Hs(108), Mt(109), Ds(110), Rg(111), Cn(112), Nh(113), Fl(114), Mc(115), Lv(116), Ts(117), Og(118)
+            const actinidesAndHeavy = [89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118];
+
+            for (let i = 0; i < 18; i++) {
+                const elementNum = actinidesAndHeavy[i];
+                if (elementNum && periodicTable[elementNum]) {
+                    const elementData = periodicTable[elementNum];
+                    const elementType = elementNum >= 89 && elementNum <= 103 ? 'Actínido' : 'Elemento pesado';
+                    const tooltip = `${elementNum}: ${elementData.symbol} - ${elementData.name} (${elementType})`;
+                    html += `<button onclick="addElement(${elementNum})" title="${tooltip}" style="background: ${elementData.color}; color: #000; border: 1px solid #555; font-size: 8px; font-weight: bold; padding: 2px 1px; margin: 0; min-width: 20px; height: 20px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">${elementData.symbol}</button>`;
+                } else {
+                    html += '<div style="background: #222; border: 1px solid #333; min-height: 20px;"></div>';
+                }
+            }
+            html += '</div>';
+
             console.log('HTML generado:', html);
             container.innerHTML = html;
-            console.log('Tabla periódica insertada en el DOM');
+            console.log('Tabla periódica completa insertada en el DOM');
         }
 
         window.addEventListener('load', () => {
@@ -919,10 +1296,24 @@
         </div>
 
         
-        <div class="controls-section" style="min-width: 550px; max-width: 600px;">
-            <h3>Tabla Periódica</h3>
-            <div id="periodicTableContainer" style="display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; font-size: 8px; background: #333; padding: 4px; border-radius: 6px; overflow: auto; height: 180px;">
+        <div class="controls-section" style="min-width: 700px; max-width: 800px;">
+            <h3>Tabla Periódica Completa (118 elementos)</h3>
+            <div id="periodicTableContainer" style="display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; font-size: 8px; background: #333; padding: 4px; border-radius: 6px; overflow: auto; height: 280px; border: 2px solid #555;">
                 <!-- La tabla se generará con JavaScript -->
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>Velocidad</h3>
+            <div class="control-group">
+                <label>Velocidad Animación: <span class="value-display" id="animationSpeedValue">1.0x</span></label>
+                <input type="range" id="animationSpeed" min="0.1" max="20.0" value="1" step="0.1" oninput="updateAnimationSpeed()">
+                <div style="font-size: 10px; color: #888; margin-top: 4px;">
+                    0.1 = Muy lento | 1.0 = Normal | 20.0 = Máximo FPS
+                </div>
+            </div>
+            <div class="control-group" style="margin-top: 10px;">
+                <label>FPS Actuales: <span class="value-display" id="fpsDisplay">0</span></label>
             </div>
         </div>
     </div>
@@ -998,6 +1389,8 @@
                     <input type="range" id="electronDamping" min="0.9" max="1" value="0.999" step="0.001" oninput="updateParam('electron_damping')">
                 </div>
             </div>
+
+
         </div>
 
         <div class="canvas-wrapper">
