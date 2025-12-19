@@ -521,7 +521,39 @@
 
             const nucleiData = engine.get_nuclei_data();
             const nuclei = JSON.parse(nucleiData);
+
+            // Mostrar elementos químicos detectados
+            const elementCounts = {};
+            nuclei.forEach(nucleus => {
+                const protonCount = nucleus.protons;
+                const elementSymbol = getElementSymbol(protonCount);
+                elementCounts[elementSymbol] = (elementCounts[elementSymbol] || 0) + 1;
+            });
+
+            const nucleiList = document.getElementById('nucleiList');
+            nucleiList.innerHTML = '';
+
+            if (Object.keys(elementCounts).length > 0) {
+                Object.entries(elementCounts).forEach(([symbol, count]) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${symbol}: ${count}`;
+                    nucleiList.appendChild(li);
+                });
+            } else {
+                nucleiList.innerHTML = '<li>Ninguno</li>';
+            }
+
             document.getElementById('nucleiCount').textContent = nuclei.length;
+        }
+
+        // Función auxiliar para obtener símbolo del elemento
+        function getElementSymbol(protonCount) {
+            const symbols = {
+                1: 'H', 2: 'He', 3: 'Li', 4: 'Be', 5: 'B', 6: 'C', 7: 'N', 8: 'O',
+                9: 'F', 10: 'Ne', 11: 'Na', 12: 'Mg', 13: 'Al', 14: 'Si', 15: 'P',
+                16: 'S', 17: 'Cl', 18: 'Ar', 19: 'K', 20: 'Ca', 26: 'Fe', 29: 'Cu', 47: 'Ag'
+            };
+            return symbols[protonCount] || `E${protonCount}`;
         }
 
         window.addSingleParticle = function(type) {
@@ -650,6 +682,54 @@
 
             localStorage.setItem('simulationConfig', JSON.stringify(config));
             alert('Configuración guardada exitosamente');
+        };
+
+        window.resetToDefaults = function() {
+            if (!engine) return;
+
+            // Resetear todos los sliders a valores por defecto
+            document.getElementById('nuclearForce').value = 25;
+            document.getElementById('nuclearRange').value = 40;
+            document.getElementById('nuclearAttractive').value = 30;
+            document.getElementById('nuclearDamping').value = 0.7;
+            document.getElementById('protonRepulsion').value = 15;
+            document.getElementById('coulombForce').value = 3;
+            document.getElementById('orbitalSpeed').value = 8;
+            document.getElementById('orbitalRadius').value = 100;
+            document.getElementById('electronRepulsion').value = 2;
+            document.getElementById('nuclearMass').value = 3;
+            document.getElementById('electronMass').value = 0.01;
+            document.getElementById('electronDamping').value = 0.999;
+
+            // Actualizar display para todos los parámetros
+            updateParam('nuclear_force');
+            updateParam('nuclear_range');
+            updateParam('nuclear_attractive');
+            updateParam('nuclear_damping');
+            updateParam('proton_repulsion');
+            updateParam('coulomb_force');
+            updateParam('orbital_speed');
+            updateParam('orbital_radius');
+            updateParam('electron_repulsion');
+            updateParam('nuclear_mass');
+            updateParam('electron_mass');
+            updateParam('electron_damping');
+
+            alert('Configuración restablecida a valores por defecto');
+        };
+
+        window.togglePause = function() {
+            const pauseBtn = document.getElementById('pauseBtn');
+            if (isRunning) {
+                isRunning = false;
+                pauseBtn.textContent = '▶️ Reanudar';
+                pauseBtn.style.background = '#4CAF50';
+            } else {
+                isRunning = true;
+                pauseBtn.textContent = '⏸️ Pausar';
+                pauseBtn.style.background = '#FF9800';
+                animate(); // Reiniciar el loop de animación
+            }
         };
 
         window.loadConfiguration = function() {
@@ -783,7 +863,9 @@
                 for (let group = 0; group < 18; group++) {
                     const element = grid[period][group];
                     if (element) {
-                        html += `<button onclick="addElement(${element.number})" title="${element.number}: ${element.symbol}" style="background: ${element.color}; color: #000; border: 1px solid #555; font-size: 10px; font-weight: bold; padding: 4px 2px; margin: 0; min-width: 24px; height: 24px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">${element.symbol}</button>`;
+                        const elementData = periodicTable[element.number];
+                        const tooltip = `${element.number}: ${elementData.symbol} - ${elementData.name} (Período ${elementData.period}, Grupo ${elementData.group})`;
+                        html += `<button onclick="addElement(${element.number})" title="${tooltip}" style="background: ${element.color}; color: #000; border: 1px solid #555; font-size: 10px; font-weight: bold; padding: 4px 2px; margin: 0; min-width: 24px; height: 24px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">${element.symbol}</button>`;
                     } else {
                         html += '<div style="background: #222; border: 1px solid #333; min-height: 24px;"></div>';
                     }
@@ -822,13 +904,17 @@
             <button class="particle-btn" onclick="addCollisionPair(0, 0)">⚡ Protón-Protón</button>
             <button class="particle-btn" onclick="addCollisionPair(1, 1)">⚡ Neutrón-Neutrón</button>
             <button class="particle-btn" onclick="addCollisionPair(2, 2)">⚡ Electrón-Electrón</button>
+            <button class="particle-btn" onclick="addCollisionPair(0, 1)">⚡ Protón-Neutrón</button>
+            <button class="particle-btn" onclick="addCollisionPair(2, 1)">⚡ Electrón-Neutrón</button>
             <button class="particle-btn" onclick="addCollisionPair(0, 2)">⚡ Protón-Electrón</button>
         </div>
 
         <div class="controls-section">
-            <h3>Config</h3>
+            <h3>Simulación</h3>
+            <button id="pauseBtn" onclick="togglePause()" style="background: #FF9800; font-size: 10px; padding: 4px 6px;">⏸️ Pausar</button>
             <button onclick="saveConfiguration()" style="background: #2196F3; font-size: 10px; padding: 4px 6px;">💾 Guardar</button>
             <button onclick="loadConfiguration()" style="background: #9C27B0; font-size: 10px; padding: 4px 6px;">📂 Cargar</button>
+            <button onclick="resetToDefaults()" style="background: #FF9800; font-size: 10px; padding: 4px 6px;">🔄 Reset</button>
             <button class="clear-btn" onclick="clearCanvas()">🗑️ Limpiar</button>
         </div>
 
@@ -982,10 +1068,10 @@
                         <li>Electrones: <strong id="electronCount">0</strong></li>
                     </ul>
                 </div>
-                <div>Núcleos Detectados:
+                <div>Átomos Detectados:
                     <div id="nucleiList"></div>
                 </div>
-                <div>Total de Núcleos: <strong id="nucleiCount">0</strong></div>
+                <div>Total de Átomos: <strong id="nucleiCount">0</strong></div>
             </div>
         </div>
     </div>
