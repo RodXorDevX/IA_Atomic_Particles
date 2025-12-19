@@ -1,0 +1,34 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_simulationengine_free: (a: number, b: number) => void;
+export const simulationengine_add_ion: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => void;
+export const simulationengine_add_nucleus: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+export const simulationengine_add_particle: (a: number, b: number, c: number, d: number) => void;
+export const simulationengine_add_particle_with_velocity: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
+export const simulationengine_clear: (a: number) => void;
+export const simulationengine_get_nuclei_data: (a: number) => [number, number];
+export const simulationengine_get_particle_count: (a: number) => number;
+export const simulationengine_get_particle_data: (a: number, b: number) => [number, number];
+export const simulationengine_new: (a: number, b: number) => number;
+export const simulationengine_render: (a: number, b: any) => void;
+export const simulationengine_set_coulomb_force: (a: number, b: number) => void;
+export const simulationengine_set_electron_damping: (a: number, b: number) => void;
+export const simulationengine_set_electron_mass: (a: number, b: number) => void;
+export const simulationengine_set_electron_repulsion: (a: number, b: number) => void;
+export const simulationengine_set_max_orbital_radius: (a: number, b: number) => void;
+export const simulationengine_set_min_orbital_radius: (a: number, b: number) => void;
+export const simulationengine_set_nuclear_attractive: (a: number, b: number) => void;
+export const simulationengine_set_nuclear_damping: (a: number, b: number) => void;
+export const simulationengine_set_nuclear_force: (a: number, b: number) => void;
+export const simulationengine_set_nuclear_mass: (a: number, b: number) => void;
+export const simulationengine_set_nuclear_range: (a: number, b: number) => void;
+export const simulationengine_set_orbital_radius: (a: number, b: number) => void;
+export const simulationengine_set_orbital_speed: (a: number, b: number) => void;
+export const simulationengine_set_proton_repulsion: (a: number, b: number) => void;
+export const simulationengine_update: (a: number) => void;
+export const __wbindgen_exn_store: (a: number) => void;
+export const __externref_table_alloc: () => number;
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;
