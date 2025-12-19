@@ -1,4 +1,4 @@
-# Logs
+# Registros
 logs
 *.log
 npm-debug.log*
@@ -7,17 +7,33 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node & Compilación
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Rust & WebAssembly
+target/
+Cargo.lock
+pkg/
+*.wasm
+wasm-pack.log
+**/*.rs.bk
+
+# Directorios y archivos del editor
 .vscode/*
 !.vscode/extensions.json
+.claude
 .idea
 .DS_Store
 *.suo
+*.swp
+*.swo
+*~
+Thumbs.db
+.env.local
+.env.*.local
 *.ntvs*
 *.njsproj
 *.sln

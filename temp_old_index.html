@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Núcleos Atómicos</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            background: #f0f0f0;
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+        }
+        .controls {
+            position: relative;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin-right: 10px;
+        }
+        .controls h3 {
+            color: white;
+            margin: 5px 0;
+        }
+        .controls-section {
+            border-top: 1px solid #444;
+            padding: 5px 0;
+        }
+        button {
+            padding: 8px 15px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .particle-btn {
+            background: #2196F3;
+        }
+        .clear-btn {
+            background: #f44336;
+        }
+        .element-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        canvas {
+            border: 1px solid #333;
+            background: #000;
+            margin: 10px;
+            width: 1200px;
+            height: 800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h3>Partículas</h3>
+        <div class="controls-section">
+            <button class="particle-btn" onclick="addSingleParticle('proton')">+ Protón</button>
+            <button class="particle-btn" onclick="addSingleParticle('neutron')">+ Neutrón</button>
+            <button class="particle-btn" onclick="addSingleParticle('electron')">+ Electrón</button>
+        </div>
+        
+        <h3>Átomos</h3>
+        <div class="controls-section">
+            <button onclick="addNucleusWithValidPosition('H')">+ Hidrógeno</button>
+            <button onclick="addNucleusWithValidPosition('He')">+ Helio</button>
+            <button onclick="addNucleusWithValidPosition('Li')">+ Litio</button>
+            <button onclick="addNucleusWithValidPosition('Be')">+ Berilio</button>
+            <!-- ... más elementos ... -->
+        </div>
+        
+        <div class="controls-section">
+            <button class="clear-btn" onclick="clearCanvas()">Limpiar Todo</button>
+        </div>
+
+        <h3>Orbitales y Energía</h3>
+        <div class="controls-section">
+            <label>Nivel de Energía: <input type="range" id="energyLevel" min="1" max="7" value="1" step="1" oninput="updateParams()"><span id="energyLevelValue"></span></label>
+            <label>Radio Orbital: <input type="range" id="orbitalRadius" min="20" max="300" value="100" step="5" oninput="updateParams()"><span id="orbitalRadiusValue"></span></label>
+        </div>
+
+        <h3>Ajustes de Interacción</h3>
+        <div class="controls-section">
+            <h4>Fuerzas Nucleares</h4>
+            <label>Fuerza Nuclear Fuerte: <input type="range" id="nuclearForce" min="0" max="50" value="25" step="0.5" oninput="updateParams()"><span id="nuclearForceValue"></span></label>
+            <label>Rango Nuclear: <input type="range" id="nuclearRange" min="20" max="150" value="40" step="1" oninput="updateParams()"><span id="nuclearRangeValue"></span></label>
+            <label>Fuerza Atractiva Nuclear: <input type="range" id="nuclearAttractive" min="0" max="50" value="30" step="0.5" oninput="updateParams()"><span id="nuclearAttractiveValue"></span></label>
+            <label>Amortiguación Nuclear: <input type="range" id="nuclearDamping" min="0" max="1" value="0.7" step="0.01" oninput="updateParams()"><span id="nuclearDampingValue"></span></label>
+        </div>
+
+        <div class="controls-section">
+            <h4>Interacción Protón-Protón</h4>
+            <label>Repulsión Protón-Protón: <input type="range" id="protonRepulsion" min="0" max="30" value="15" step="0.5" oninput="updateParams()"><span id="protonRepulsionValue"></span></label>
+        </div>
+
+        <div class="controls-section">
+            <h4>Interacción Electrón-Protón</h4>
+            <label>Fuerza Coulomb: <input type="range" id="coulombForce" min="0" max="10" value="3" step="0.1" oninput="updateParams()"><span id="coulombForceValue"></span></label>
+            <label>Velocidad Orbital: <input type="range" id="orbitalSpeed" min="0" max="20" value="8" step="0.5" oninput="updateParams()"><span id="orbitalSpeedValue"></span></label>
+            <label>Radio Orbital Mínimo: <input type="range" id="minOrbitalRadius" min="20" max="100" value="50" step="5" oninput="updateParams()"><span id="minOrbitalRadiusValue"></span></label>
+            <label>Radio Orbital Máximo: <input type="range" id="maxOrbitalRadius" min="100" max="300" value="150" step="5" oninput="updateParams()"><span id="maxOrbitalRadiusValue"></span></label>
+        </div>
+
+        <div class="controls-section">
+            <h4>Interacción Electrón-Electrón</h4>
+            <label>Repulsión Electrón-Electrón: <input type="range" id="electronRepulsion" min="0" max="5" value="2" step="0.1" oninput="updateParams()"><span id="electronRepulsionValue"></span></label>
+        </div>
+
+        <div class="controls-section">
+            <h4>Masas y Amortiguación</h4>
+            <label>Masa Nuclear: <input type="range" id="nuclearMass" min="1" max="10" value="3" step="0.5" oninput="updateParams()"><span id="nuclearMassValue"></span></label>
+            <label>Masa Electrón: <input type="range" id="electronMass" min="0.001" max="0.1" value="0.01" step="0.001" oninput="updateParams()"><span id="electronMassValue"></span></label>
+            <label>Amortiguación Electrón: <input type="range" id="electronDamping" min="0.9" max="1" value="0.999" step="0.001" oninput="updateParams()"><span id="electronDampingValue"></span></label>
+        </div>
+    </div>
+
+    <canvas id="particleCanvas"></canvas>
+    <div class="element-info">
+        <h3>Estado Actual</h3>
+        Partículas:
+        <br>Protones: <span id="protonCount">0</span>
+        <br>Neutrones: <span id="neutronCount">0</span>
+        <br>
+        <br>Núcleos Detectados:
+        <div id="nucleiList"></div>
+        <br>Total de Núcleos: <span id="nucleiCount">0</span>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        // Establecer tamaño del canvas
+        canvas.width = 1200;
+        canvas.height = 800;
+
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let isRunning = false;
+
+        // Variables globales para los parámetros
+        const params = {
+            nuclearForce: 25.0,
+            nuclearRange: 40,
+            nuclearAttractive: 30.0,
+            nuclearDamping: 0.7,
+            protonRepulsion: 15.0,
+            coulombForce: 3.0,
+            orbitalSpeed: 8.0,
+            minOrbitalRadius: 50,
+            maxOrbitalRadius: 150,
+            electronRepulsion: 2.0,
+            nuclearMass: 3.0,
+            electronMass: 0.0005,
+            electronDamping: 0.99,
+            energyLevel: 1,
+            orbitalRadius: 100
+        };
+
+        // Constantes físicas
+        const k = 8.9875e9; // Constante de Coulomb en N·m²/C²
+        const q_proton = 1.602e-19; // Carga del protón en Coulombs
+        const q_electron = -1.602e-19; // Carga del electrón en Coulombs
+        const scale = 1e-12; // Escala para convertir metros a picómetros
+
+        // Actualizar parámetros desde los controles
+        function updateParams() {
+            for (const key in params) {
+                const element = document.getElementById(key);
+                const valueElement = document.getElementById(key + 'Value');
+                if (element) {
+                    params[key] = parseFloat(element.value);
+                    if (valueElement) {
+                        valueElement.textContent = `${params[key]} ${getUnit(key)}`;
+                    }
+                }
+            }
+        }
+
+        // Obtener la unidad de medida para cada parámetro
+        function getUnit(key) {
+            switch (key) {
+                case 'nuclearForce':
+                case 'nuclearAttractive':
+                case 'protonRepulsion':
+                case 'coulombForce':
+                case 'electronRepulsion':
+                    return 'N'; // Newtons
+                case 'nuclearRange':
+                case 'minOrbitalRadius':
+                case 'maxOrbitalRadius':
+                case 'orbitalRadius':
+                    return 'm'; // Metros
+                case 'nuclearDamping':
+                case 'electronDamping':
+                    return ''; // Sin unidad
+                case 'nuclearMass':
+                case 'electronMass':
+                    return 'kg'; // Kilogramos
+                case 'energyLevel':
+                    return ''; // Sin unidad
+                default:
+                    return '';
+            }
+        }
+
+        // Añadir event listeners a todos los controles
+        window.addEventListener('load', () => {
+            for (const key in params) {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.addEventListener('input', updateParams);
+                }
+            }
+        });
+
+        function drawOrbital(x, y, orbitalType, scaleFactor = 1) {
+            ctx.save();
+            ctx.setLineDash([5, 5]); // Línea discontinua
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; // Color blanco con baja opacidad
+            ctx.lineWidth = 0.5; // Grosor de línea muy delgado
+
+            switch (orbitalType) {
+                case 's':
+                    ctx.beginPath();
+                    ctx.arc(x, y, params.orbitalRadius * scaleFactor, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                case 'p':
+                    // Dibujar dos lóbulos
+                    ctx.beginPath();
+                    ctx.ellipse(x - params.orbitalRadius * scaleFactor / 2, y, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.ellipse(x + params.orbitalRadius * scaleFactor / 2, y, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                case 'd':
+                    // Dibujar cuatro lóbulos
+                    ctx.beginPath();
+                    ctx.ellipse(x, y - params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.ellipse(x, y + params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.ellipse(x - params.orbitalRadius * scaleFactor / 2, y, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.ellipse(x + params.orbitalRadius * scaleFactor / 2, y, params.orbitalRadius * scaleFactor / 2, params.orbitalRadius * scaleFactor, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                    break;
+                case 'f':
+                    // Implementar lógica específica para f
+                    break;
+                case 'g':
+                    // Implementar lógica específica para g
+                    break;
+            }
+
+            ctx.restore();
+        }
+
+        // Configuración electrónica para elementos hasta el 103
+        const electronConfiguration = {
+            1: ['s'],
+            2: ['s'],
+            3: ['s', 'p'],
+            4: ['s', 'p'],
+            5: ['s', 'p'],
+            6: ['s', 'p'],
+            7: ['s', 'p'],
+            8: ['s', 'p', 'd'],
+            9: ['s', 'p', 'd'],
+            10: ['s', 'p', 'd'],
+            11: ['s', 'p', 'd'],
+            12: ['s', 'p', 'd'],
+            13: ['s', 'p', 'd', 'f'],
+            14: ['s', 'p', 'd', 'f'],
+            15: ['s', 'p', 'd', 'f'],
+            16: ['s', 'p', 'd', 'f'],
+            17: ['s', 'p', 'd', 'f'],
+            18: ['s', 'p', 'd', 'f'],
+            19: ['s', 'p', 'd', 'f'],
+            20: ['s', 'p', 'd', 'f'],
+            21: ['s', 'p', 'd', 'f'],
+            22: ['s', 'p', 'd', 'f'],
+            23: ['s', 'p', 'd', 'f'],
+            24: ['s', 'p', 'd', 'f'],
+            25: ['s', 'p', 'd', 'f'],
+            26: ['s', 'p', 'd', 'f'],
+            27: ['s', 'p', 'd', 'f'],
+            28: ['s', 'p', 'd', 'f'],
+            29: ['s', 'p', 'd', 'f'],
+            30: ['s', 'p', 'd', 'f'],
+            31: ['s', 'p', 'd', 'f'],
+            32: ['s', 'p', 'd', 'f'],
+            33: ['s', 'p', 'd', 'f'],
+            34: ['s', 'p', 'd', 'f'],
+            35: ['s', 'p', 'd', 'f'],
+            36: ['s', 'p', 'd', 'f'],
+            37: ['s', 'p', 'd', 'f'],
+            38: ['s', 'p', 'd', 'f'],
+            39: ['s', 'p', 'd', 'f'],
+            40: ['s', 'p', 'd', 'f'],
+            41: ['s', 'p', 'd', 'f'],
+            42: ['s', 'p', 'd', 'f'],
+            43: ['s', 'p', 'd', 'f'],
+            44: ['s', 'p', 'd', 'f'],
+            45: ['s', 'p', 'd', 'f'],
+            46: ['s', 'p', 'd', 'f'],
+            47: ['s', 'p', 'd', 'f'],
+            48: ['s', 'p', 'd', 'f'],
+            49: ['s', 'p', 'd', 'f'],
+            50: ['s', 'p', 'd', 'f'],
+            51: ['s', 'p', 'd', 'f'],
+            52: ['s', 'p', 'd', 'f'],
+            53: ['s', 'p', 'd', 'f'],
+            54: ['s', 'p', 'd', 'f'],
+            55: ['s', 'p', 'd', 'f'],
+            56: ['s', 'p', 'd', 'f'],
+            57: ['s', 'p', 'd', 'f'],
+            58: ['s', 'p', 'd', 'f'],
+            59: ['s', 'p', 'd', 'f'],
+            60: ['s', 'p', 'd', 'f'],
+            61: ['s', 'p', 'd', 'f'],
+            62: ['s', 'p', 'd', 'f'],
+            63: ['s', 'p', 'd', 'f'],
+            64: ['s', 'p', 'd', 'f'],
+            65: ['s', 'p', 'd', 'f'],
+            66: ['s', 'p', 'd', 'f'],
+            67: ['s', 'p', 'd', 'f'],
+            68: ['s', 'p', 'd', 'f'],
+            69: ['s', 'p', 'd', 'f'],
+            70: ['s', 'p', 'd', 'f'],
+            71: ['s', 'p', 'd', 'f'],
+            72: ['s', 'p', 'd', 'f'],
+            73: ['s', 'p', 'd', 'f'],
+            74: ['s', 'p', 'd', 'f'],
+            75: ['s', 'p', 'd', 'f'],
+            76: ['s', 'p', 'd', 'f'],
+            77: ['s', 'p', 'd', 'f'],
+            78: ['s', 'p', 'd', 'f'],
+            79: ['s', 'p', 'd', 'f'],
+            80: ['s', 'p', 'd', 'f'],
+            81: ['s', 'p', 'd', 'f'],
+            82: ['s', 'p', 'd', 'f'],
+            83: ['s', 'p', 'd', 'f'],
+            84: ['s', 'p', 'd', 'f'],
+            85: ['s', 'p', 'd', 'f'],
+            86: ['s', 'p', 'd', 'f'],
+            87: ['s', 'p', 'd', 'f'],
+            88: ['s', 'p', 'd', 'f'],
+            89: ['s', 'p', 'd', 'f'],
+            90: ['s', 'p', 'd', 'f'],
+            91: ['s', 'p', 'd', 'f'],
+            92: ['s', 'p', 'd', 'f'],
+            93: ['s', 'p', 'd', 'f'],
+            94: ['s', 'p', 'd', 'f'],
+            95: ['s', 'p', 'd', 'f'],
+            96: ['s', 'p', 'd', 'f'],
+            97: ['s', 'p', 'd', 'f'],
+            98: ['s', 'p', 'd', 'f'],
+            99: ['s', 'p', 'd', 'f'],
+            100: ['s', 'p', 'd', 'f'],
+            101: ['s', 'p', 'd', 'f'],
+            102: ['s', 'p', 'd', 'f'],
+            103: ['s', 'p', 'd', 'f'],
+        };
+
+        // Modificar la función para dibujar orbitales
+        function drawAtomOrbitals(nucleus) {
+            const centerX = nucleus.protons.reduce((sum, i) => sum + particles[i].x, 0) / nucleus.protons.length;
+            const centerY = nucleus.protons.reduce((sum, i) => sum + particles[i].y, 0) / nucleus.protons.length;
+
+            const element = periodicTable[nucleus.protons.length];
+            if (!element) return;
+
+            const config = electronConfiguration[nucleus.protons.length];
+            if (config) {
+                config.forEach((orbitalType, index) => {
+                    drawOrbital(centerX, centerY, orbitalType, index + 1);
+                });
+            }
+        }
+
+        class Particle {
+            constructor(x, y, type, orbitalType = 'none') {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.orbitalType = orbitalType;
+                this.radius = type === 'electron' ? 10 : 20;
+                this.charge = type === 'proton' ? 1 : (type === 'electron' ? -1 : 0);
+                this.mass = type === 'electron' ? params.electronMass : params.nuclearMass;
+
+                if (type === 'electron') {
+                    this.setInitialPositionAndVelocity();
+                } else {
+                    const initialSpeed = 2;
+                    this.dx = (Math.random() - 0.5) * initialSpeed;
+                    this.dy = (Math.random() - 0.5) * initialSpeed;
+                }
+            }
+
+            setInitialPositionAndVelocity() {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const orbitalRadius = params.orbitalRadius;
+
+                switch (this.orbitalType) {
+                    case 's':
+                        // Distribuir electrones en un orbital s
+                        this.x = centerX + Math.random() * orbitalRadius - orbitalRadius / 2;
+                        this.y = centerY + Math.random() * orbitalRadius - orbitalRadius / 2;
+                        break;
+                    case 'p':
+                        // Distribuir electrones en un orbital p
+                        const angleP = Math.random() * Math.PI * 2;
+                        this.x = centerX + Math.cos(angleP) * (orbitalRadius * 1.5);
+                        this.y = centerY + Math.sin(angleP) * (orbitalRadius * 1.5);
+                        break;
+                    case 'd':
+                        // Distribuir electrones en un orbital d
+                        const angleD = Math.random() * Math.PI * 2;
+                        this.x = centerX + Math.cos(angleD) * (orbitalRadius * 2);
+                        this.y = centerY + Math.sin(angleD) * (orbitalRadius * 2);
+                        break;
+                    case 'f':
+                        // Implementar lógica específica para f
+                        break;
+                    case 'g':
+                        // Implementar lógica específica para g
+                        break;
+                    default:
+                        this.x = centerX + Math.random() * orbitalRadius - orbitalRadius / 2;
+                        this.y = centerY + Math.random() * orbitalRadius - orbitalRadius / 2;
+                }
+
+                // Velocidad aleatoria dentro del orbital
+                this.dx = (Math.random() - 0.5) * 2; // Velocidad aleatoria en x
+                this.dy = (Math.random() - 0.5) * 2; // Velocidad aleatoria en y
+            }
+
+            update() {
+                // Colisiones con bordes
+                if (this.x + this.radius > canvas.width) {
+                    this.x = canvas.width - this.radius;
+                    this.dx *= -0.9;
+                }
+                if (this.x - this.radius < 0) {
+                    this.x = this.radius;
+                    this.dx *= -0.9;
+                }
+                if (this.y + this.radius > canvas.height) {
+                    this.y = canvas.height - this.radius;
+                    this.dy *= -0.9;
+                }
+                if (this.y - this.radius < 0) {
+                    this.y = this.radius;
+                    this.dy *= -0.9;
+                }
+
+                // Actualizar posición
+                this.x += this.dx;
+                this.y += this.dy;
+
+                // Solo mantener la posición orbital si hay un núcleo cercano
+                if (this.type === 'electron' && this.orbitalType !== 'none') {
+                    const nuclei = detectNuclei();
+                    let closestNucleus = null;
+                    let minDistance = Infinity;
+                    
+                    nuclei.forEach(nucleus => {
+                        const centerX = nucleus.protons.reduce((sum, i) => sum + particles[i].x, 0) / nucleus.protons.length;
+                        const centerY = nucleus.protons.reduce((sum, i) => sum + particles[i].y, 0) / nucleus.protons.length;
+                        const dx = this.x - centerX;
+                        const dy = this.y - centerY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestNucleus = nucleus;
+                        }
+                    });
+
+                    // Si no hay núcleo cercano o está muy lejos, convertirse en electrón libre
+                    if (!closestNucleus || minDistance > params.maxOrbitalRadius * 1.5) {
+                        this.orbitalType = 'none';
+                    }
+                }
+
+                if (this.type === 'electron') {
+                    this.dx *= params.electronDamping;
+                    this.dy *= params.electronDamping;
+                } else {
+                    this.dx *= params.nuclearDamping;
+                    this.dy *= params.nuclearDamping;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = this.type === 'proton' ? '#ff0000' : 
+                                (this.type === 'neutron' ? '#ffffff' : '#00ffff');
+                ctx.stroke();
+                if (this.type !== 'electron') {
+                    this.drawQuarks(this.type === 'proton' ? ['up', 'up', 'down'] : ['up', 'down', 'down']);
+                }
+            }
+
+            drawQuarks(types) {
+                types.forEach((type, i) => {
+                    const angle = (i * 2 * Math.PI) / 3;
+                    const qx = this.x + Math.cos(angle) * (this.radius * 0.5);
+                    const qy = this.y + Math.sin(angle) * (this.radius * 0.5);
+                    
+                    ctx.beginPath();
+                    ctx.arc(qx, qy, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = type === 'up' ? '#ff6b6b' : '#4ecdc4';
+                    ctx.fill();
+                });
+            }
+        }
+
+        function calculateForces() {
+            updateParams(); // Actualizar parámetros antes de calcular fuerzas
+            
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = (particles[j].x - particles[i].x) * scale;
+                    const dy = (particles[j].y - particles[i].y) * scale;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance === 0) continue; // Evitar división por cero
+                    
+                    let totalForce = 0;
+                    
+                    // Repulsión protón-protón (Coulomb)
+                    if (particles[i].type === 'proton' && particles[j].type === 'proton') {
+                        totalForce = (k * q_proton * q_proton) / (distance * distance);
+                    }
+                    
+                    // Interacción protón-electrón (Coulomb)
+                    else if ((particles[i].type === 'proton' && particles[j].type === 'electron') ||
+                             (particles[i].type === 'electron' && particles[j].type === 'proton')) {
+                        totalForce = -(k * q_proton * q_electron) / (distance * distance);
+                        totalForce *= 500; // Ajustar el escalamiento para estabilizar la atracción
+                    }
+                    
+                    // Repulsión electrón-electrón (Coulomb)
+                    else if (particles[i].type === 'electron' && particles[j].type === 'electron') {
+                        totalForce = (k * q_electron * q_electron) / (distance * distance);
+                        totalForce *= 1000; // Escalar la fuerza para hacerla más visible
+                    }
+                    
+                    // Atracción nuclear fuerte (corta distancia)
+                    else if ((particles[i].type === 'proton' && particles[j].type === 'neutron') ||
+                             (particles[i].type === 'neutron' && particles[j].type === 'proton')) {
+                        if (distance < params.nuclearRange * scale) {
+                            totalForce = -params.nuclearAttractive * Math.exp(-distance / (params.nuclearRange * scale));
+                        }
+                    }
+                    
+                    if (totalForce !== 0) {
+                        const forceMagnitude = totalForce / distance;
+                        const fx = forceMagnitude * dx;
+                        const fy = forceMagnitude * dy;
+                        
+                        // Ajustar las masas y amortiguación
+                        const m1 = particles[i].type === 'electron' ? params.electronMass : params.nuclearMass;
+                        const m2 = particles[j].type === 'electron' ? params.electronMass : params.nuclearMass;
+                        
+                        particles[i].dx -= fx / m1;
+                        particles[i].dy -= fy / m1;
+                        particles[j].dx += fx / m2;
+                        particles[j].dy += fy / m2;
+                    }
+                }
+            }
+        }
+
+        function addProton() {
+            const x = Math.random() * (canvas.width - 40) + 20;
+            const y = Math.random() * (canvas.height - 40) + 20;
+            particles.push(new Particle(x, y, 'proton'));
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        }
+
+        function addNeutron() {
+            const x = Math.random() * (canvas.width - 40) + 20;
+            const y = Math.random() * (canvas.height - 40) + 20;
+            particles.push(new Particle(x, y, 'neutron'));
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        }
+
+        function toggleSimulation() {
+            isRunning = !isRunning;
+            if (isRunning) animate();
+        }
+
+        // Tabla periódica extendida
+        const periodicTable = {
+            1: { symbol: 'H', name: 'Hidrógeno', color: '#ff9999' },
+            2: { symbol: 'He', name: 'Helio', color: '#ffcc99' },
+            3: { symbol: 'Li', name: 'Litio', color: '#ff99cc' },
+            4: { symbol: 'Be', name: 'Berilio', color: '#cc99ff' },
+            5: { symbol: 'B', name: 'Boro', color: '#99ffcc' },
+            6: { symbol: 'C', name: 'Carbono', color: '#99ccff' },
+            7: { symbol: 'N', name: 'Nitrógeno', color: '#ffff99' },
+            8: { symbol: 'O', name: 'Oxígeno', color: '#ff9966' },
+            9: { symbol: 'F', name: 'Flúor', color: '#99ff99' },
+            10: { symbol: 'Ne', name: 'Neón', color: '#ff99ff' },
+            11: { symbol: 'Na', name: 'Sodio', color: '#9999ff' },
+            12: { symbol: 'Mg', name: 'Magnesio', color: '#ffcc66' },
+            13: { symbol: 'Al', name: 'Aluminio', color: '#cc99cc' },
+            14: { symbol: 'Si', name: 'Silicio', color: '#99ffff' },
+            15: { symbol: 'P', name: 'Fósforo', color: '#ffff66' },
+            16: { symbol: 'S', name: 'Azufre', color: '#ff6666' },
+            17: { symbol: 'Cl', name: 'Cloro', color: '#66ff66' },
+            18: { symbol: 'Ar', name: 'Argón', color: '#ff66ff' },
+            19: { symbol: 'K', name: 'Potasio', color: '#6666ff' },
+            20: { symbol: 'Ca', name: 'Calcio', color: '#ffcc33' }
+        };
+
+        function drawNucleusLabel(nucleus) {
+            const centerX = nucleus.protons.reduce((sum, i) => sum + particles[i].x, 0) / nucleus.protons.length;
+            const centerY = nucleus.protons.reduce((sum, i) => sum + particles[i].y, 0) / nucleus.protons.length;
+            
+            const element = periodicTable[nucleus.protons.length];
+            if (!element) return;
+
+            ctx.save();
+            
+            // Dibujar círculo de fondo
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, Math.PI * 2);
+            ctx.fillStyle = element.color + '66'; // Añadir transparencia
+            ctx.fill();
+            
+            // Dibujar texto
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(element.symbol, centerX, centerY);
+            
+            // Dibujar información adicional
+            ctx.font = '12px Arial';
+            ctx.fillText(`${nucleus.protons.length}`, centerX, centerY + 20);
+            
+            // Dibujar orbitales
+            const minRadius = params.minOrbitalRadius;
+            const maxRadius = params.maxOrbitalRadius;
+            drawOrbital(centerX, centerY, minRadius, true); // Primer orbital
+            drawOrbital(centerX, centerY, maxRadius, true); // Último orbital
+            
+            ctx.restore();
+        }
+
+        function addNucleus(element, position) {
+            const elem = elements[element];
+            if (!elem) return;
+
+            const radius = 40; // Radio aumentado para mejor visualización
+            
+            // Añadir protones
+            for (let i = 0; i < elem.Z; i++) {
+                const angle = (i * 2 * Math.PI) / elem.Z;
+                const x = position.x + Math.cos(angle) * radius;
+                const y = position.y + Math.sin(angle) * radius;
+                const proton = new Particle(x, y, 'proton');
+                particles.push(proton);
+            }
+
+            // Añadir neutrones
+            for (let i = 0; i < elem.N; i++) {
+                const angle = (i * 2 * Math.PI) / elem.N;
+                const x = position.x + Math.cos(angle) * (radius * 1.2);
+                const y = position.y + Math.sin(angle) * (radius * 1.2);
+                const neutron = new Particle(x, y, 'neutron');
+                particles.push(neutron);
+            }
+
+            // Añadir electrones según la configuración electrónica
+            for (let i = 0; i < elem.Z; i++) {
+                const orbitalType = getOrbitalType(i, elem.Z); // Obtener el tipo de orbital correspondiente
+                const electron = new Particle(position.x, position.y, 'electron', orbitalType);
+                setElectronPosition(electron, position, i, elem.Z); // Establecer la posición del electrón
+                particles.push(electron);
+            }
+
+            updateParticleCount();
+            
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        }
+
+        function createFreeElectrons(count) {
+            for (let i = 0; i < count; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const electron = new Particle(x, y, 'electron'); // Sin tipo de orbital
+                particles.push(electron);
+            }
+        }
+
+        function detectNuclei() {
+            const nuclei = [];
+            const usedParticles = new Set();
+            
+            // Primero detectar todos los núcleos
+            particles.forEach((particle, i) => {
+                if (particle.type === 'proton' && !usedParticles.has(i)) {
+                    const nucleus = {
+                        protons: [i],
+                        neutrons: [],
+                        center: { x: particle.x, y: particle.y }
+                    };
+                    usedParticles.add(i);
+                    
+                    // Buscar partículas cercanas
+                    particles.forEach((otherParticle, j) => {
+                        if (i !== j && !usedParticles.has(j)) {
+                            const dx = otherParticle.x - particle.x;
+                            const dy = otherParticle.y - particle.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < 100) {
+                                if (otherParticle.type === 'proton') {
+                                    nucleus.protons.push(j);
+                                } else {
+                                    nucleus.neutrons.push(j);
+                                }
+                                usedParticles.add(j);
+                            }
+                        }
+                    });
+                    
+                    nuclei.push(nucleus);
+                }
+            });
+
+            // Luego manejar los electrones
+            particles.forEach(particle => {
+                if (particle.type === 'electron') {
+                    let closestNucleus = null;
+                    let minDistance = Infinity;
+                    
+                    // Encontrar el núcleo más cercano
+                    nuclei.forEach(nucleus => {
+                        const centerX = nucleus.protons.reduce((sum, i) => sum + particles[i].x, 0) / nucleus.protons.length;
+                        const centerY = nucleus.protons.reduce((sum, i) => sum + particles[i].y, 0) / nucleus.protons.length;
+                        const dx = particle.x - centerX;
+                        const dy = particle.y - centerY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestNucleus = nucleus;
+                        }
+                    });
+
+                    // Si está dentro del radio orbital, asignar orbitalType
+                    if (closestNucleus && minDistance < params.maxOrbitalRadius) {
+                        const element = periodicTable[closestNucleus.protons.length];
+                        if (element) {
+                            const config = electronConfiguration[closestNucleus.protons.length];
+                            if (config) {
+                                // Asignar el tipo de orbital basado en la distancia
+                                const orbitalIndex = Math.floor(minDistance / (params.maxOrbitalRadius / config.length));
+                                particle.orbitalType = config[Math.min(orbitalIndex, config.length - 1)];
+                            }
+                        }
+                    } else {
+                        // Si está fuera del radio, es un electrón libre
+                        particle.orbitalType = 'none';
+                    }
+                }
+            });
+
+            // Dibujar orbitales solo para núcleos existentes
+            nuclei.forEach(nucleus => {
+                drawAtomOrbitals(nucleus);
+            });
+
+            return nuclei;
+        }
+
+        function getOrbitalType(index, totalElectrons) {
+            // Lógica para determinar el tipo de orbital según el índice del electrón
+            if (totalElectrons === 1) return 's'; // Hidrógeno
+            if (totalElectrons === 2) return 's'; // Helio
+            if (totalElectrons <= 10) return 'p'; // Litio y Berilio
+            if (totalElectrons <= 18) return 'd'; // Otros
+            return 's'; // Por defecto
+        }
+
+        function updateParticleCount() {
+            const protons = particles.filter(p => p.type === 'proton').length;
+            const neutrons = particles.filter(p => p.type === 'neutron').length;
+            const nuclei = Math.floor(protons / 2); // Estimación aproximada de núcleos
+            
+            document.getElementById('protonCount').textContent = protons;
+            document.getElementById('neutronCount').textContent = neutrons;
+            document.getElementById('nucleiCount').textContent = nuclei;
+        }
+
+        // Prevenir superposición de núcleos
+        function isPositionValid(position) {
+            for (let particle of particles) {
+                const dx = particle.x - position.x;
+                const dy = particle.y - position.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 100) return false;
+            }
+            return true;
+        }
+
+        // Obtener posición válida para nuevo núcleo
+        function getValidPosition() {
+            let position;
+            let attempts = 0;
+            do {
+                position = getRandomPosition();
+                attempts++;
+            } while (!isPositionValid(position) && attempts < 10);
+            return position;
+        }
+
+        // Modificar los botones para usar la nueva función
+        function addNucleusWithValidPosition(element) {
+            let position;
+            let attempts = 0;
+            const maxAttempts = 20; // Aumentado el número de intentos
+
+            do {
+                position = getRandomPosition();
+                attempts++;
+                if (attempts >= maxAttempts) {
+                    console.log("No se encontró espacio disponible");
+                    return; // Evitar añadir si no hay espacio
+                }
+            } while (!isPositionValid(position));
+
+            addNucleus(element, position);
+        }
+
+        function clearCanvas() {
+            particles = [];
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateParticleCount();
+        }
+
+        // Actualizar la función animate para incluir las etiquetas
+        function animate() {
+            if (!isRunning) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            calculateForces();
+            
+            // Dibujar partículas
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            
+            // Detectar y etiquetar núcleos
+            const nuclei = detectNuclei();
+            nuclei.forEach(nucleus => {
+                drawNucleusLabel(nucleus);
+            });
+            
+            updateNucleiInfo();
+            
+            requestAnimationFrame(animate);
+        }
+
+        // Actualizar la función para mostrar información de núcleos
+        function updateNucleiInfo() {
+            const nuclei = detectNuclei();
+            const nucleiList = document.getElementById('nucleiList');
+            
+            const nucleiMap = new Map();
+            nuclei.forEach(nucleus => {
+                const protons = nucleus.protons.length;
+                const neutrons = nucleus.neutrons.length;
+                const element = periodicTable[protons];
+                
+                if (element) {
+                    const key = `${element.name} (${element.symbol})`;
+                    const info = {
+                        count: (nucleiMap.get(key)?.count || 0) + 1,
+                        p: protons,
+                        n: neutrons
+                    };
+                    nucleiMap.set(key, info);
+                }
+            });
+            
+            let html = '<ul style="margin: 5px; padding-left: 20px;">';
+            nucleiMap.forEach((info, element) => {
+                html += `<li style="margin-bottom: 5px;">
+                    ${element}: ${info.count}
+                    <br><small>P: ${info.p}, N: ${info.n}</small>
+                </li>`;
+            });
+            html += '</ul>';
+            
+            nucleiList.innerHTML = html;
+        }
+
+        // Añadir partículas iniciales
+        addProton();
+        addProton();
+        addNeutron();
+
+        // Definición de elementos
+        const elements = {
+            'H': { name: 'Hidrógeno', Z: 1, N: 0 },
+            'He': { name: 'Helio', Z: 2, N: 2 },
+            'Li': { name: 'Litio', Z: 3, N: 4 },
+            'Be': { name: 'Berilio', Z: 4, N: 5 }
+        };
+
+        function getRandomPosition() {
+            const margin = 150; // Margen aumentado desde los bordes
+            return {
+                x: margin + Math.random() * (canvas.width - 2 * margin),
+                y: margin + Math.random() * (canvas.height - 2 * margin)
+            };
+        }
+
+        // Función para añadir una partícula individual
+        function addSingleParticle(type) {
+            const x = Math.random() * (canvas.width - 40) + 20;
+            const y = Math.random() * (canvas.height - 40) + 20;
+            particles.push(new Particle(x, y, type));
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        }
+
+        // Ajustar la masa del electrón para aumentar la interacción
+        params.electronMass = 0.0005; // Ajustar la masa para mejorar la interacción
+
+        // Asegurar que la amortiguación no sea excesiva
+        params.electronDamping = 0.99; // Aumentar la amortiguación para estabilizar el movimiento
+
+        // Función para añadir un electrón en un tipo de orbital específico
+        function addElectron(orbitalType) {
+            const x = Math.random() * (canvas.width - 40) + 20;
+            const y = Math.random() * (canvas.height - 40) + 20;
+            particles.push(new Particle(x, y, 'electron', orbitalType));
+            if (!isRunning) {
+                isRunning = true;
+                animate();
+            }
+        }
+
+        function setElectronPosition(electron, nucleusPosition, index, totalElectrons) {
+            const centerX = nucleusPosition.x;
+            const centerY = nucleusPosition.y;
+            const orbitalRadius = params.orbitalRadius;
+
+            // Distribuir electrones en posiciones específicas
+            switch (electron.orbitalType) {
+                case 's':
+                    electron.x = centerX + Math.random() * orbitalRadius - orbitalRadius / 2;
+                    electron.y = centerY + Math.random() * orbitalRadius - orbitalRadius / 2;
+                    break;
+                case 'p':
+                    const pOrbitalIndex = index % 3; // Distribuir en 3 lóbulos
+                    const angleP = (pOrbitalIndex * Math.PI) / 3; // 120 grados entre electrones
+                    electron.x = centerX + Math.cos(angleP) * (orbitalRadius * 1.5);
+                    electron.y = centerY + Math.sin(angleP) * (orbitalRadius * 1.5);
+                    break;
+                case 'd':
+                    const dOrbitalIndex = index % 5; // Distribuir en 5 lóbulos
+                    const angleD = (dOrbitalIndex * Math.PI) / 5; // 72 grados entre electrones
+                    electron.x = centerX + Math.cos(angleD) * (orbitalRadius * 2);
+                    electron.y = centerY + Math.sin(angleD) * (orbitalRadius * 2);
+                    break;
+                case 'f':
+                    // Implementar lógica específica para f
+                    break;
+                case 'g':
+                    // Implementar lógica específica para g
+                    break;
+                default:
+                    electron.x = centerX + Math.random() * orbitalRadius - orbitalRadius / 2;
+                    electron.y = centerY + Math.random() * orbitalRadius - orbitalRadius / 2;
+            }
+        }
+    </script>
+</body>
+</html>

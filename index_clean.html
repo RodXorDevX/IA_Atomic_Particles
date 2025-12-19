@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Partículas Atómicas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+        }
+
+        .control-panel {
+            width: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            margin-right: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-area {
+            display: flex;
+            flex-direction: row;
+            flex: 1;
+        }
+
+        .info-panels {
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            overflow-y: auto;
+            border-right: 2px solid #333;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #000;
+            position: relative;
+        }
+
+        .controls h3 {
+            color: #4CAF50;
+            margin: 15px 0 10px 0;
+            font-size: 16px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+
+        .controls h4 {
+            color: #2196F3;
+            margin: 10px 0 8px 0;
+            font-size: 14px;
+        }
+
+        .controls-section {
+            border-top: 1px solid #444;
+            padding: 8px 0;
+            margin: 5px 0;
+        }
+
+        .controls-section:first-child {
+            border-top: none;
+        }
+
+        button {
+            padding: 10px 15px;
+            margin: 4px 0;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .particle-btn {
+            background: #2196F3;
+            width: 100%;
+        }
+
+        .particle-btn:hover {
+            background: #1976D2;
+        }
+
+        .clear-btn {
+            background: #f44336;
+            width: 100%;
+        }
+
+        .clear-btn:hover {
+            background: #d32f2f;
+        }
+
+        .control-group {
+            margin: 10px 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .control-group input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        .value-display {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .color-legend {
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            border: 2px solid #2196f3;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .color-legend h3 {
+            color: #2196f3;
+            margin-bottom: 6px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .legend-section {
+            margin-bottom: 8px;
+        }
+
+        .legend-section h4 {
+            color: #4CAF50;
+            margin-bottom: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 1px 2px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            flex-shrink: 0;
+        }
+
+        .element-info {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.9);
+            color: #4CAF50;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            border: 2px solid #4CAF50;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        .element-info h3 {
+            color: #4CAF50;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .element-info ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .element-info li {
+            padding: 2px 0;
+            margin: 0;
+            font-size: 11px;
+        }
+
+        canvas {
+            border: 3px solid #333;
+            background: #000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            display: block;
+        }
+
+        #status {
+            color: #4CAF50;
+            font-weight: bold;
+            float: right;
+        }
+
+        /* Periodic Table Styles */
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 2px;
+            margin-bottom: 10px;
+        }
+
+        .element-btn {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 2px;
+            cursor: pointer;
+            font-size: 8px;
+            min-height: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .element-btn:hover {
+            background: #4CAF50;
+            transform: scale(1.1);
+        }
+
+        .element-btn .symbol {
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .element-btn .number {
+            font-size: 6px;
+            opacity: 0.7;
+        }
+
+        .lanthanide-series, .actinide-series {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 2px;
+            margin: 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <!-- Panel de control a la izquierda -->
+        <div class="control-panel">
+            <div class="controls">
+                <!-- El contenido del control se agregará aquí por JavaScript -->
+            </div>
+        </div>
+
+        <!-- Área principal -->
+        <div class="main-area">
+            <!-- Paneles de información a la izquierda -->
+            <div class="info-panels">
+                <div class="color-legend">
+                    <h3>Leyenda de Subniveles</h3>
+                    <div class="legend-section">
+                        <h4>🔬 Subniveles Orbitales</h4>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ff9800;"></span>
+                                <span>1s - Esférico</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ffff00;"></span>
+                                <span>2s - Esférico</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #4caf50;"></span>
+                                <span>2p - Forma 8</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #9c27b0;"></span>
+                                <span>3s - Esférico</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #2196f3;"></span>
+                                <span>3p - Forma 8</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ff5722;"></span>
+                                <span>4s - Esférico</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #8e24aa;"></span>
+                                <span>3d - Trébol</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #00bcd4;"></span>
+                                <span>4f - Complejo</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="legend-section">
+                        <h4>⚛️ Partículas</h4>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="color-box" style="background: rgba(255, 0, 0, 0.05); border: 1px solid #ff0000;"></span>
+                                <span>Protón (5%)</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid #ffffff;"></span>
+                                <span>Neutrón (5%)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="legend-section">
+                        <h4>🔬 Electrones por Orbital</h4>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ff9800;"></span>
+                                <span>1s</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ffff00;"></span>
+                                <span>2s</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #4caf50;"></span>
+                                <span>2p</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #9c27b0;"></span>
+                                <span>3s</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #2196f3;"></span>
+                                <span>3p</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ff5722;"></span>
+                                <span>4s</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #8e24aa;"></span>
+                                <span>3d</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #00bcd4;"></span>
+                                <span>4f</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ffffff; border: 1px solid #ccc;"></span>
+                                <span>Libre</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="element-info">
+                    <h3>Estado Actual</h3>
+                    <div>Partículas:
+                        <ul>
+                            <li>Protones: <strong id="protonCount">0</strong></li>
+                            <li>Neutrones: <strong id="neutronCount">0</strong></li>
+                            <li>Electrones: <strong id="electronCount">0</strong></li>
+                        </ul>
+                    </div>
+                    <div>Núcleos Detectados:
+                        <div id="nucleiList"></div>
+                    </div>
+                    <div>Total de Núcleos: <strong id="nucleiCount">0</strong></div>
+                </div>
+            </div>
+
+            <!-- Canvas a la derecha -->
+            <div class="canvas-container">
+                <div id="status" class="loading">Cargando WebAssembly...</div>
+                <canvas id="particleCanvas" width="1400" height="800" style="display:none; width: 100%; height: 800px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { SimulationEngine } from './pkg/atomic_particles_simulation.js?init';
+
+        let engine = null;
+        let canvas = null;
+        let ctx = null;
+        let animationId = null;
+        let isRunning = false;
+
+        const periodicTable = {
+            1: { symbol: 'H', name: 'Hidrógeno', period: 1, group: 1 },
+            2: { symbol: 'He', name: 'Helio', period: 1, group: 18 },
+            3: { symbol: 'Li', name: 'Litio', period: 2, group: 1 },
+            4: { symbol: 'Be', name: 'Berilio', period: 2, group: 2 },
+            5: { symbol: 'B', name: 'Boro', period: 2, group: 13 },
+            6: { symbol: 'C', name: 'Carbono', period: 2, group: 14 },
+            7: { symbol: 'N', name: 'Nitrógeno', period: 2, group: 15 },
+            8: { symbol: 'O', name: 'Oxígeno', period: 2, group: 16 },
+            9: { symbol: 'F', name: 'Flúor', period: 2, group: 17 },
+            10: { symbol: 'Ne', name: 'Neón', period: 2, group: 18 },
+            11: { symbol: 'Na', name: 'Sodio', period: 3, group: 1 },
+            12: { symbol: 'Mg', name: 'Magnesio', period: 3, group: 2 },
+            13: { symbol: 'Al', name: 'Aluminio', period: 3, group: 13 },
+            14: { symbol: 'Si', name: 'Silicio', period: 3, group: 14 },
+            15: { symbol: 'P', name: 'Fósforo', period: 3, group: 15 },
+            16: { symbol: 'S', name: 'Azufre', period: 3, group: 16 },
+            17: { symbol: 'Cl', name: 'Cloro', period: 3, group: 17 },
+            18: { symbol: 'Ar', name: 'Argón', period: 3, group: 18 },
+            19: { symbol: 'K', name: 'Potasio', period: 4, group: 1 },
+            20: { symbol: 'Ca', name: 'Calcio', period: 4, group: 2 },
+            21: { symbol: 'Sc', name: 'Escandio', period: 4, group: 3 },
+            22: { symbol: 'Ti', name: 'Titanio', period: 4, group: 4 },
+            23: { symbol: 'V', name: 'Vanadio', period: 4, group: 5 },
+            24: { symbol: 'Cr', name: 'Cromo', period: 4, group: 6 },
+            25: { symbol: 'Mn', name: 'Manganeso', period: 4, group: 7 },
+            26: { symbol: 'Fe', name: 'Hierro', period: 4, group: 8 },
+            27: { symbol: 'Co', name: 'Cobalto', period: 4, group: 9 },
+            28: { symbol: 'Ni', name: 'Níquel', period: 4, group: 10 },
+            29: { symbol: 'Cu', name: 'Cobre', period: 4, group: 11 },
+            30: { symbol: 'Zn', name: 'Zinc', period: 4, group: 12 },
+            31: { symbol: 'Ga', name: 'Galio', period: 4, group: 13 },
+            32: { symbol: 'Ge', name: 'Germanio', period: 4, group: 14 },
+            33: { symbol: 'As', name: 'Arsénico', period: 4, group: 15 },
+            34: { symbol: 'Se', name: 'Selenio', period: 4, group: 16 },
+            35: { symbol: 'Br', name: 'Bromo', period: 4, group: 17 },
+            36: { symbol: 'Kr', name: 'Kriptón', period: 4, group: 18 },
+            57: { symbol: 'La', name: 'Lantano', period: 6, group: 3, lanthanide: true },
+            58: { symbol: 'Ce', name: 'Cerio', period: 6, group: 3, lanthanide: true },
+            89: { symbol: 'Ac', name: 'Actinio', period: 7, group: 3, actinide: true },
+            90: { symbol: 'Th', name: 'Torio', period: 7, group: 3, actinide: true },
+            92: { symbol: 'U', name: 'Uranio', period: 7, group: 3, actinide: true }
+        };
+
+        // Función para generar la tabla periódica
+        function generatePeriodicTable() {
+            const mainTable = document.getElementById('periodicTable');
+            const lanthanidesContainer = document.getElementById('lanthanides');
+            const actinidesContainer = document.getElementById('actinides');
+
+            // Create grid for main table (7 periods x 18 groups)
+            const grid = Array(7).fill(null).map(() => Array(18).fill(null));
+
+            // Place elements in their positions
+            for (let [number, element] of Object.entries(periodicTable)) {
+                if (!element.lanthanide && !element.actinide) {
+                    const { period, group } = element;
+                    if (period <= 7 && group <= 18) {
+                        grid[period - 1][group - 1] = { number: parseInt(number), ...element };
+                    }
+                }
+            }
+
+            // Generate main table
+            mainTable.innerHTML = '';
+            for (let period = 0; period < 7; period++) {
+                for (let group = 0; group < 18; group++) {
+                    const element = grid[period][group];
+                    const button = document.createElement('div');
+                    button.className = 'element-btn';
+
+                    if (element) {
+                        button.innerHTML = `
+                            <div class="number">${element.number}</div>
+                            <div class="symbol">${element.symbol}</div>
+                        `;
+                        button.title = `${element.name} (${element.number})`;
+                        button.onclick = () => addElement(element.number);
+                    }
+
+                    mainTable.appendChild(button);
+                }
+            }
+
+            // Generate lanthanides
+            lanthanidesContainer.innerHTML = '';
+            for (let [number, element] of Object.entries(periodicTable)) {
+                if (element.lanthanide) {
+                    const button = document.createElement('div');
+                    button.className = 'element-btn';
+                    button.innerHTML = `
+                        <div class="number">${number}</div>
+                        <div class="symbol">${element.symbol}</div>
+                    `;
+                    button.title = `${element.name} (${number})`;
+                    button.onclick = () => addElement(element.number);
+                    lanthanidesContainer.appendChild(button);
+                }
+            }
+
+            // Generate actinides
+            actinidesContainer.innerHTML = '';
+            for (let [number, element] of Object.entries(periodicTable)) {
+                if (element.actinide) {
+                    const button = document.createElement('div');
+                    button.className = 'element-btn';
+                    button.innerHTML = `
+                        <div class="number">${number}</div>
+                        <div class="symbol">${element.symbol}</div>
+                    `;
+                    button.title = `${element.name} (${number})`;
+                    button.onclick = () => addElement(element.number);
+                    actinidesContainer.appendChild(button);
+                }
+            }
+        }
+
+        function generateControls() {
+            const controlsContainer = document.querySelector('.controls');
+
+            controlsContainer.innerHTML = `
+                <h3>Partículas</h3>
+                <div class="controls-section">
+                    <button class="particle-btn" onclick="addSingleParticle(0)">+ Protón</button>
+                    <button class="particle-btn" onclick="addSingleParticle(1)">+ Neutrón</button>
+                    <button class="particle-btn" onclick="addSingleParticle(2)">+ Electrón</button>
+                </div>
+
+                <h3>Iones del Hidrógeno</h3>
+                <div class="controls-section">
+                    <button class="particle-btn" onclick="addHydrogenIons()">H⁺, H, H⁻</button>
+                    <button class="particle-btn" onclick="addElementAtom(1, 1)">H⁺ (Protón)</button>
+                    <button class="particle-btn" onclick="addElementAtom(1, 0)">H (Neutro)</button>
+                    <button class="particle-btn" onclick="addElementAtom(1, -1)">H⁻ (Hidruro)</button>
+                </div>
+
+                <h3>Tabla Periódica</h3>
+                <div class="controls-section">
+                    <div class="periodic-table" id="periodicTable"></div>
+                    <div class="lanthanide-series" id="lanthanides"></div>
+                    <div class="actinide-series" id="actinides"></div>
+                </div>
+
+                <div class="controls-section">
+                    <button class="clear-btn" onclick="clearCanvas()">🗑️ Limpiar Todo</button>
+                </div>
+
+                <h3>Colisiones Controladas</h3>
+                <div class="controls-section">
+                    <button class="particle-btn" onclick="addCollisionPair(0, 0)">⚡ Protón-Protón</button>
+                    <button class="particle-btn" onclick="addCollisionPair(1, 1)">⚡ Neutrón-Neutrón</button>
+                    <button class="particle-btn" onclick="addCollisionPair(2, 2)">⚡ Electrón-Electrón</button>
+                    <button class="particle-btn" onclick="addCollisionPair(0, 1)">⚡ Protón-Neutrón</button>
+                    <button class="particle-btn" onclick="addCollisionPair(0, 2)">⚡ Protón-Electrón</button>
+                    <button class="particle-btn" onclick="addCollisionPair(1, 2)">⚡ Neutrón-Electrón</button>
+                </div>
+
+                <h3>Configuración</h3>
+                <div class="controls-section">
+                    <button onclick="saveConfiguration()" style="background: #2196F3;">💾 Guardar Config</button>
+                    <button onclick="resetConfiguration()" style="background: #FF9800;">🔄 Reset Defectos</button>
+                    <button onclick="loadConfiguration()" style="background: #9C27B0;">📂 Cargar Config</button>
+                </div>
+
+                <h3>Fuerzas Nucleares</h3>
+                <div class="controls-section">
+                    <div class="control-group">
+                        <label>Fuerza Nuclear Fuerte: <span class="value-display" id="nuclearForceValue">25.0</span></label>
+                        <input type="range" id="nuclearForce" min="0" max="50" value="25" step="0.5" oninput="updateParam('nuclear_force')">
+                    </div>
+                    <div class="control-group">
+                        <label>Rango Nuclear: <span class="value-display" id="nuclearRangeValue">40</span></label>
+                        <input type="range" id="nuclearRange" min="20" max="150" value="40" step="1" oninput="updateParam('nuclear_range')">
+                    </div>
+                </div>
+
+                <h3>Interacciones</h3>
+                <div class="controls-section">
+                    <h4>Protón-Protón</h4>
+                    <div class="control-group">
+                        <label>Repulsión: <span class="value-display" id="protonRepulsionValue">15.0</span></label>
+                        <input type="range" id="protonRepulsion" min="0" max="30" value="15" step="0.5" oninput="updateParam('proton_repulsion')">
+                    </div>
+                </div>
+
+                <div class="controls-section">
+                    <h4>Electrón-Protón</h4>
+                    <div class="control-group">
+                        <label>Fuerza Coulomb: <span class="value-display" id="coulombForceValue">3.0</span></label>
+                        <input type="range" id="coulombForce" min="0" max="10" value="3" step="0.1" oninput="updateParam('coulomb_force')">
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateParam(paramName) {
+            if (!engine) return;
+
+            const element = document.getElementById(paramName);
+            const valueElement = document.getElementById(paramName + 'Value');
+
+            if (element && valueElement) {
+                const value = parseFloat(element.value);
+                valueElement.textContent = value;
+
+                // Llamar al método correspondiente en el motor Rust
+                const methodName = 'set_' + paramName.replace('_', '');
+                if (engine[methodName]) {
+                    engine[methodName](value);
+                }
+            }
+        }
+
+        function addSingleParticle(type) {
+            if (!engine) return;
+            engine.add_particle(Math.random() * 800, Math.random() * 600, type);
+        }
+
+        function addSingleParticleWithVelocity(type, dx, dy) {
+            if (!engine) return;
+            engine.add_particle_with_velocity(
+                Math.random() * 800,
+                Math.random() * 600,
+                type,
+                dx,
+                dy
+            );
+        }
+
+        function addHydrogenIons() {
+            if (!engine) return;
+            // H⁺
+            engine.add_nucleus(400, 300, 1, 0, 0);
+            // H
+            engine.add_nucleus(600, 300, 1, 0, 1);
+            // H⁻
+            engine.add_nucleus(800, 300, 1, 0, 2);
+        }
+
+        function addElementAtom(atomicNumber, charge) {
+            if (!engine) return;
+            const element = periodicTable[atomicNumber];
+            if (element) {
+                const neutrons = atomicNumber === 1 ? 0 : Math.floor(atomicNumber * 1.5);
+                const electrons = atomicNumber - charge;
+                engine.add_ion(400 + atomicNumber * 100, 300, atomicNumber, neutrons, electrons, charge);
+            }
+        }
+
+        function addElement(atomicNumber) {
+            addElementAtom(atomicNumber, 0); // Átomo neutro por defecto
+        }
+
+        function addCollisionPair(type1, type2) {
+            if (!engine) return;
+
+            const centerX = 700;
+            const centerY = 400;
+            const separation = 100;
+
+            // Primera partícula
+            engine.add_particle_with_velocity(
+                centerX - separation/2,
+                centerY,
+                type1,
+                2.0,
+                0
+            );
+
+            // Segunda partícula
+            engine.add_particle_with_velocity(
+                centerX + separation/2,
+                centerY,
+                type2,
+                -2.0,
+                0
+            );
+        }
+
+        function clearCanvas() {
+            if (!engine) return;
+            engine.clear();
+            updateDisplay();
+        }
+
+        function saveConfiguration() {
+            if (!engine) return;
+
+            const config = {
+                nuclearForce: document.getElementById('nuclearForce').value,
+                nuclearRange: document.getElementById('nuclearRange').value,
+                protonRepulsion: document.getElementById('protonRepulsion').value,
+                coulombForce: document.getElementById('coulombForce').value
+            };
+
+            localStorage.setItem('simulationConfig', JSON.stringify(config));
+            alert('Configuración guardada exitosamente');
+        }
+
+        function loadConfiguration() {
+            if (!engine) return;
+
+            const savedConfig = localStorage.getItem('simulationConfig');
+            if (!savedConfig) {
+                alert('No hay configuración guardada');
+                return;
+            }
+
+            try {
+                const config = JSON.parse(savedConfig);
+
+                document.getElementById('nuclearForce').value = config.nuclearForce || 25;
+                document.getElementById('nuclearRange').value = config.nuclearRange || 40;
+                document.getElementById('protonRepulsion').value = config.protonRepulsion || 15;
+                document.getElementById('coulombForce').value = config.coulombForce || 3;
+
+                // Actualizar display
+                updateParam('nuclear_force');
+                updateParam('nuclear_range');
+                updateParam('proton_repulsion');
+                updateParam('coulomb_force');
+
+                alert('Configuración cargada exitosamente');
+            } catch (error) {
+                alert('Error al cargar la configuración');
+            }
+        }
+
+        function resetConfiguration() {
+            if (!engine) return;
+
+            document.getElementById('nuclearForce').value = 25;
+            document.getElementById('nuclearRange').value = 40;
+            document.getElementById('protonRepulsion').value = 15;
+            document.getElementById('coulombForce').value = 3;
+
+            updateParam('nuclear_force');
+            updateParam('nuclear_range');
+            updateParam('proton_repulsion');
+            updateParam('coulomb_force');
+
+            alert('Configuración restablecida a valores por defecto');
+        }
+
+        function updateDisplay() {
+            if (!engine) return;
+
+            const particleCount = engine.get_particle_count();
+            const nucleiData = engine.get_nuclei_data();
+
+            document.getElementById('protonCount').textContent = 0;
+            document.getElementById('neutronCount').textContent = 0;
+            document.getElementById('electronCount').textContent = 0;
+            document.getElementById('nucleiCount').textContent = 0;
+            document.getElementById('nucleiList').innerHTML = '';
+
+            // Contar partículas
+            for (let i = 0; i < particleCount; i++) {
+                const particleData = JSON.parse(engine.get_particle_data(i));
+                if (particleData.type === 0) document.getElementById('protonCount').textContent++;
+                if (particleData.type === 1) document.getElementById('neutronCount').textContent++;
+                if (particleData.type === 2) document.getElementById('electronCount').textContent++;
+            }
+
+            // Mostrar núcleos
+            try {
+                const nuclei = JSON.parse(nucleiData);
+                document.getElementById('nucleiCount').textContent = nuclei.length;
+
+                nuclei.forEach((nucleus, index) => {
+                    const nucleiInfo = document.createElement('div');
+                    nucleiInfo.style.marginBottom = '8px';
+                    nucleiInfo.style.padding = '4px';
+                    nucleiInfo.style.background = 'rgba(76, 175, 80, 0.1)';
+                    nucleiInfo.style.borderRadius = '3px';
+                    nucleiInfo.innerHTML = `
+                        <strong>Núcleo ${index + 1}:</strong>
+                        P: ${nucleus.protons},
+                        N: ${nucleus.neutrons},
+                        E: ${nucleus.electrons}
+                    `;
+                    document.getElementById('nucleiList').appendChild(nucleiInfo);
+                });
+            } catch (error) {
+                console.error('Error parsing nuclei data:', error);
+            }
+        }
+
+        async function initWasm() {
+            try {
+                await init();
+                engine = new SimulationEngine(1400, 800);
+
+                canvas = document.getElementById('particleCanvas');
+                ctx = canvas.getContext('2d');
+
+                // Ajustar el canvas al ancho disponible
+                const canvasContainer = document.querySelector('.canvas-container');
+                const availableWidth = canvasContainer.clientWidth - 20;
+                canvas.width = availableWidth;
+                canvas.style.width = availableWidth + 'px';
+
+                // Mostrar canvas y ocultar status
+                canvas.style.display = 'block';
+                document.getElementById('status').style.display = 'none';
+
+                // Inicializar controles y tabla periódica
+                generateControls();
+                generatePeriodicTable();
+
+                // Cargar configuración guardada o inicializar valores por defecto
+                if (!loadConfiguration()) {
+                    // Si no hay configuración guardada, añadir algunas partículas iniciales
+                    setTimeout(() => {
+                        addHydrogenIons();
+                        setTimeout(() => {
+                            addCollisionPair(0, 1); // Protón-Neutrón
+                            setTimeout(() => {
+                                addCollisionPair(2, 2); // Electrón-Electrón
+                            }, 1000);
+                        }, 500);
+                    }, 1000);
+                }
+
+                // Iniciar animación
+                isRunning = true;
+                animate();
+
+            } catch (error) {
+                console.error('Error initializing WebAssembly:', error);
+                document.getElementById('status').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        function animate() {
+            if (!isRunning || !engine) return;
+
+            engine.update();
+            engine.render(ctx);
+            updateDisplay();
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        function saveSimulationState() {
+            if (!engine) return;
+
+            const particleCount = engine.get_particle_count();
+            const particles = [];
+
+            for (let i = 0; i < particleCount; i++) {
+                const particleData = JSON.parse(engine.get_particle_data(i));
+                if (particleData) {
+                    particles.push(particleData);
+                }
+            }
+
+            const simulationState = {
+                particles: particles,
+                timestamp: new Date().toISOString(),
+                config: {
+                    nuclearForce: document.getElementById('nuclearForce').value,
+                    nuclearRange: document.getElementById('nuclearRange').value,
+                    protonRepulsion: document.getElementById('protonRepulsion').value,
+                    coulombForce: document.getElementById('coulombForce').value
+                }
+            };
+
+            localStorage.setItem('simulationState', JSON.stringify(simulationState));
+        }
+
+        function loadSimulationState() {
+            const savedState = localStorage.getItem('simulationState');
+            if (!savedState) return false;
+
+            try {
+                const state = JSON.parse(savedState);
+
+                // Recrear partículas
+                if (state.particles && state.particles.length > 0) {
+                    state.particles.forEach(particle => {
+                        if (particle.dx !== undefined && particle.dy !== undefined) {
+                            addSingleParticleWithVelocity(particle.type, particle.x, particle.y, particle.dx, particle.dy);
+                        } else {
+                            addSingleParticle(particle.type);
+                        }
+                    });
+                }
+
+                // Cargar configuración
+                if (state.config) {
+                    document.getElementById('nuclearForce').value = state.config.nuclearForce || 25;
+                    document.getElementById('nuclearRange').value = state.config.nuclearRange || 40;
+                    document.getElementById('protonRepulsion').value = state.config.protonRepulsion || 15;
+                    document.getElementById('coulombForce').value = state.config.coulombForce || 3;
+
+                    updateParam('nuclear_force');
+                    updateParam('nuclear_range');
+                    updateParam('proton_repulsion');
+                    updateParam('coulomb_force');
+                }
+
+                return true;
+            } catch (error) {
+                console.error('Error loading simulation state:', error);
+                return false;
+            }
+        }
+
+        function setupAutoSave() {
+            // Guardar estado cada 5 segundos
+            setInterval(saveSimulationState, 5000);
+
+            // Guardar al cerrar la página
+            window.addEventListener('beforeunload', saveSimulationState);
+        }
+
+        // Inicializar cuando la página cargue
+        window.addEventListener('DOMContentLoaded', initWasm);
+    </script>
+</body>
+</html>

@@ -31,7 +31,7 @@
             flex-wrap: wrap;
             gap: 15px;
             align-items: flex-start;
-            max-height: 216px;
+            max-height: 200px;
             overflow-x: auto;
             overflow-y: auto;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -40,8 +40,8 @@
         .controls-section {
             display: flex;
             flex-direction: column;
-            min-width: 150px;
-            max-width: 250px;
+            min-width: 180px;
+            max-width: 280px;
             flex-shrink: 0;
         }
 
@@ -61,18 +61,18 @@
         }
 
         button {
-            padding: 8px 12px;
-            margin: 3px 0;
+            padding: 4px 6px;
+            margin: 2px 0;
             cursor: pointer;
             background: #4CAF50;
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 12px;
+            border-radius: 3px;
+            font-size: 10px;
             transition: background 0.2s;
             white-space: nowrap;
             flex-shrink: 0;
-            min-width: 80px;
+            min-width: 60px;
         }
 
         button:hover {
@@ -81,9 +81,9 @@
 
         .particle-btn {
             background: #2196F3;
-            padding: 6px 10px;
-            font-size: 11px;
-            min-width: 70px;
+            padding: 3px 5px;
+            font-size: 9px;
+            min-width: 50px;
         }
 
         .particle-btn:hover {
@@ -92,8 +92,8 @@
 
         .clear-btn {
             background: #f44336;
-            padding: 8px 12px;
-            font-size: 12px;
+            padding: 5px 8px;
+            font-size: 10px;
         }
 
         .clear-btn:hover {
@@ -136,62 +136,16 @@
             overflow: hidden;
         }
 
-        .controls-sidebar {
-            width: 250px;
-            background: rgba(0, 0, 0, 0.95);
-            padding: 15px;
-            border-right: 2px solid #333;
-            overflow-y: auto;
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
-        }
-
-        .controls-sidebar h3 {
-            color: #4CAF50;
-            margin: 0 0 15px 0;
-            font-size: 16px;
-            border-bottom: 2px solid #4CAF50;
-            padding-bottom: 5px;
-        }
-
-        .controls-sidebar h4 {
-            color: #2196F3;
-            margin: 15px 0 8px 0;
-            font-size: 12px;
-        }
-
-        .controls-sidebar .controls-section {
-            margin-bottom: 15px;
-        }
-
-        .controls-sidebar .control-group {
-            margin: 8px 0;
-        }
-
-        .controls-sidebar .control-group label {
-            display: block;
-            margin-bottom: 4px;
-            color: #fff;
-            font-size: 11px;
-        }
-
-        .controls-sidebar input[type="range"] {
-            width: 100%;
-            cursor: pointer;
-        }
-
         .canvas-wrapper {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 0;
-            margin: 0;
-            height: 100vh;
-            background: #000;
+            padding: 20px;
         }
 
         .info-sidebar {
-            width: 210px; /* Reducido 30% desde 300px */
+            width: 300px;
             background: rgba(0, 0, 0, 0.9);
             padding: 20px;
             border-left: 2px solid #333;
@@ -443,19 +397,14 @@
 
         async function initWasm() {
             try {
-                // Usar la inicialización estándar de wasm-bindgen
+                // Use the standard wasm-bindgen initialization
                 const { SimulationEngine, default: init } = await import('./pkg/atomic_particles_simulation.js');
 
-                // Inicializar el módulo WebAssembly
+                // Initialize the WebAssembly module
                 await init();
 
                 canvas = document.getElementById('particleCanvas');
                 ctx = canvas.getContext('2d');
-
-                // Establecer dimensiones del canvas para que coincidan con su tamaño mostrado
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width;
-                canvas.height = rect.height;
 
                 engine = new SimulationEngine(canvas.width, canvas.height);
 
@@ -466,11 +415,6 @@
                 engine.add_particle(centerX + 50, centerY, 1);
 
                 canvas.style.display = 'block';
-
-                // Generar tabla periódica después de cargar todo
-                console.log('Generando tabla periódica...');
-                generatePeriodicTable();
-                console.log('Tabla periódica generada');
 
                 isRunning = true;
                 animate();
@@ -550,16 +494,8 @@
             const valueMap = {
                 'nuclear_force': 'nuclearForce',
                 'nuclear_range': 'nuclearRange',
-                'nuclear_attractive': 'nuclearAttractive',
-                'nuclear_damping': 'nuclearDamping',
-                'proton_repulsion': 'protonRepulsion',
                 'coulomb_force': 'coulombForce',
-                'orbital_speed': 'orbitalSpeed',
-                'orbital_radius': 'orbitalRadius',
-                'electron_repulsion': 'electronRepulsion',
-                'nuclear_mass': 'nuclearMass',
-                'electron_mass': 'electronMass',
-                'electron_damping': 'electronDamping'
+                'proton_repulsion': 'protonRepulsion'
             };
 
             const inputId = valueMap[paramName];
@@ -636,16 +572,8 @@
             const config = {
                 nuclearForce: document.getElementById('nuclearForce').value,
                 nuclearRange: document.getElementById('nuclearRange').value,
-                nuclearAttractive: document.getElementById('nuclearAttractive').value,
-                nuclearDamping: document.getElementById('nuclearDamping').value,
                 protonRepulsion: document.getElementById('protonRepulsion').value,
-                coulombForce: document.getElementById('coulombForce').value,
-                orbitalSpeed: document.getElementById('orbitalSpeed').value,
-                orbitalRadius: document.getElementById('orbitalRadius').value,
-                electronRepulsion: document.getElementById('electronRepulsion').value,
-                nuclearMass: document.getElementById('nuclearMass').value,
-                electronMass: document.getElementById('electronMass').value,
-                electronDamping: document.getElementById('electronDamping').value
+                coulombForce: document.getElementById('coulombForce').value
             };
 
             localStorage.setItem('simulationConfig', JSON.stringify(config));
@@ -664,33 +592,16 @@
             try {
                 const config = JSON.parse(savedConfig);
 
-                // Cargar todos los valores de configuración
                 document.getElementById('nuclearForce').value = config.nuclearForce || 25;
                 document.getElementById('nuclearRange').value = config.nuclearRange || 40;
-                document.getElementById('nuclearAttractive').value = config.nuclearAttractive || 30;
-                document.getElementById('nuclearDamping').value = config.nuclearDamping || 0.7;
                 document.getElementById('protonRepulsion').value = config.protonRepulsion || 15;
                 document.getElementById('coulombForce').value = config.coulombForce || 3;
-                document.getElementById('orbitalSpeed').value = config.orbitalSpeed || 8;
-                document.getElementById('orbitalRadius').value = config.orbitalRadius || 100;
-                document.getElementById('electronRepulsion').value = config.electronRepulsion || 2;
-                document.getElementById('nuclearMass').value = config.nuclearMass || 3;
-                document.getElementById('electronMass').value = config.electronMass || 0.01;
-                document.getElementById('electronDamping').value = config.electronDamping || 0.999;
 
-                // Actualizar display para todos los parámetros
+                // Actualizar display
                 updateParam('nuclear_force');
                 updateParam('nuclear_range');
-                updateParam('nuclear_attractive');
-                updateParam('nuclear_damping');
                 updateParam('proton_repulsion');
                 updateParam('coulomb_force');
-                updateParam('orbital_speed');
-                updateParam('orbital_radius');
-                updateParam('electron_repulsion');
-                updateParam('nuclear_mass');
-                updateParam('electron_mass');
-                updateParam('electron_damping');
 
                 alert('Configuración cargada exitosamente');
             } catch (error) {
@@ -758,13 +669,8 @@
 
         // Generar tabla periódica
         function generatePeriodicTable() {
-            console.log('Iniciando generatePeriodicTable()');
             const container = document.getElementById('periodicTableContainer');
-            console.log('Container:', container);
-            if (!container) {
-                console.error('No se encontró el container periodicTableContainer');
-                return;
-            }
+            if (!container) return;
 
             // Crear grid de 7 periodos x 18 grupos
             const grid = Array(7).fill(null).map(() => Array(18).fill(null));
@@ -783,20 +689,19 @@
                 for (let group = 0; group < 18; group++) {
                     const element = grid[period][group];
                     if (element) {
-                        html += `<button onclick="addElement(${element.number})" title="${element.number}: ${element.symbol}" style="background: ${element.color}; color: #000; border: 1px solid #555; font-size: 10px; font-weight: bold; padding: 4px 2px; margin: 0; min-width: 24px; height: 24px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center;">${element.symbol}</button>`;
+                        html += `<button onclick="addElement(${element.number})" title="${element.number}" style="background: ${element.color}; color: #000; border: 1px solid #333; font-size: 6px; padding: 1px; min-width: 15px; height: 12px;">${element.symbol}</button>`;
                     } else {
-                        html += '<div style="background: #222; border: 1px solid #333; min-height: 24px;"></div>';
+                        html += '<div></div>';
                     }
                 }
             }
 
-            console.log('HTML generado:', html);
             container.innerHTML = html;
-            console.log('Tabla periódica insertada en el DOM');
         }
 
         window.addEventListener('load', () => {
             initWasm();
+            generatePeriodicTable();
         });
     </script>
 </head>
@@ -832,90 +737,58 @@
             <button class="clear-btn" onclick="clearCanvas()">🗑️ Limpiar</button>
         </div>
 
-        
-        <div class="controls-section" style="min-width: 550px; max-width: 600px;">
+        <div class="controls-section">
+            <h3>Fuerza Nuclear</h3>
+            <div class="control-group">
+                <label>Fuerza: <span class="value-display" id="nuclearForceValue">25.0</span></label>
+                <input type="range" id="nuclearForce" min="0" max="50" value="25" step="0.5" oninput="updateParam('nuclear_force')">
+            </div>
+            <div class="control-group">
+                <label>Rango: <span class="value-display" id="nuclearRangeValue">40</span></label>
+                <input type="range" id="nuclearRange" min="20" max="150" value="40" step="1" oninput="updateParam('nuclear_range')">
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>Interacciones</h3>
+            <div class="control-group">
+                <label>Repulsión P-P: <span class="value-display" id="protonRepulsionValue">15.0</span></label>
+                <input type="range" id="protonRepulsion" min="0" max="30" value="15" step="0.5" oninput="updateParam('proton_repulsion')">
+            </div>
+            <div class="control-group">
+                <label>Coulomb: <span class="value-display" id="coulombForceValue">3.0</span></label>
+                <input type="range" id="coulombForce" min="0" max="10" value="3" step="0.1" oninput="updateParam('coulomb_force')">
+            </div>
+            <div class="control-group">
+                <label>Velocidad Orbital: <span class="value-display" id="orbitalSpeedValue">8.0</span></label>
+                <input type="range" id="orbitalSpeed" min="0" max="20" value="8" step="0.5" oninput="updateParam('orbital_speed')">
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <h3>Masas</h3>
+            <div class="control-group">
+                <label>Masa Nuclear: <span class="value-display" id="nuclearMassValue">3.0</span></label>
+                <input type="range" id="nuclearMass" min="1" max="10" value="3" step="0.5" oninput="updateParam('nuclear_mass')">
+            </div>
+            <div class="control-group">
+                <label>Masa Electrón: <span class="value-display" id="electronMassValue">0.01</span></label>
+                <input type="range" id="electronMass" min="0.001" max="0.1" value="0.01" step="0.001" oninput="updateParam('electron_mass')">
+            </div>
+        </div>
+
+        <div class="controls-section" style="min-width: 600px; max-width: 800px;">
             <h3>Tabla Periódica</h3>
-            <div id="periodicTableContainer" style="display: grid; grid-template-columns: repeat(18, 1fr); gap: 2px; font-size: 8px; background: #333; padding: 4px; border-radius: 6px; overflow: auto; height: 180px;">
+            <div id="periodicTableContainer" style="display: grid; grid-template-columns: repeat(18, 1fr); gap: 1px; font-size: 7px; background: #333; padding: 2px; border-radius: 4px; overflow: auto; max-height: 160px;">
                 <!-- La tabla se generará con JavaScript -->
             </div>
         </div>
     </div>
 
     <div class="main-container">
-        <div class="controls-sidebar">
-            <h3>Controles</h3>
-
-            <div class="controls-section">
-                <h4>Fuerzas Nucleares</h4>
-                <div class="control-group">
-                    <label>Fuerza Nuclear Fuerte: <span class="value-display" id="nuclearForceValue">25.0</span></label>
-                    <input type="range" id="nuclearForce" min="0" max="50" value="25" step="0.5" oninput="updateParam('nuclear_force')">
-                </div>
-                <div class="control-group">
-                    <label>Rango Nuclear: <span class="value-display" id="nuclearRangeValue">40</span></label>
-                    <input type="range" id="nuclearRange" min="20" max="150" value="40" step="1" oninput="updateParam('nuclear_range')">
-                </div>
-                <div class="control-group">
-                    <label>Fuerza Atractiva: <span class="value-display" id="nuclearAttractiveValue">30.0</span></label>
-                    <input type="range" id="nuclearAttractive" min="0" max="50" value="30" step="0.5" oninput="updateParam('nuclear_attractive')">
-                </div>
-                <div class="control-group">
-                    <label>Amortiguación Nuclear: <span class="value-display" id="nuclearDampingValue">0.7</span></label>
-                    <input type="range" id="nuclearDamping" min="0" max="1" value="0.7" step="0.01" oninput="updateParam('nuclear_damping')">
-                </div>
-            </div>
-
-            <div class="controls-section">
-                <h4>Protón-Protón</h4>
-                <div class="control-group">
-                    <label>Repulsión: <span class="value-display" id="protonRepulsionValue">15.0</span></label>
-                    <input type="range" id="protonRepulsion" min="0" max="30" value="15" step="0.5" oninput="updateParam('proton_repulsion')">
-                </div>
-            </div>
-
-            <div class="controls-section">
-                <h4>Electrón-Protón</h4>
-                <div class="control-group">
-                    <label>Fuerza Coulomb: <span class="value-display" id="coulombForceValue">3.0</span></label>
-                    <input type="range" id="coulombForce" min="0" max="10" value="3" step="0.1" oninput="updateParam('coulomb_force')">
-                </div>
-                <div class="control-group">
-                    <label>Velocidad Orbital: <span class="value-display" id="orbitalSpeedValue">8.0</span></label>
-                    <input type="range" id="orbitalSpeed" min="0" max="20" value="8" step="0.5" oninput="updateParam('orbital_speed')">
-                </div>
-                <div class="control-group">
-                    <label>Radio Orbital: <span class="value-display" id="orbitalRadiusValue">100</span></label>
-                    <input type="range" id="orbitalRadius" min="20" max="300" value="100" step="5" oninput="updateParam('orbital_radius')">
-                </div>
-            </div>
-
-            <div class="controls-section">
-                <h4>Electrón-Electrón</h4>
-                <div class="control-group">
-                    <label>Repulsión: <span class="value-display" id="electronRepulsionValue">2.0</span></label>
-                    <input type="range" id="electronRepulsion" min="0" max="5" value="2" step="0.1" oninput="updateParam('electron_repulsion')">
-                </div>
-            </div>
-
-            <div class="controls-section">
-                <h4>Masas y Amortiguación</h4>
-                <div class="control-group">
-                    <label>Masa Nuclear: <span class="value-display" id="nuclearMassValue">3.0</span></label>
-                    <input type="range" id="nuclearMass" min="1" max="10" value="3" step="0.5" oninput="updateParam('nuclear_mass')">
-                </div>
-                <div class="control-group">
-                    <label>Masa Electrón: <span class="value-display" id="electronMassValue">0.01</span></label>
-                    <input type="range" id="electronMass" min="0.001" max="0.1" value="0.01" step="0.001" oninput="updateParam('electron_mass')">
-                </div>
-                <div class="control-group">
-                    <label>Amortiguación Electrón: <span class="value-display" id="electronDampingValue">0.999</span></label>
-                    <input type="range" id="electronDamping" min="0.9" max="1" value="0.999" step="0.001" oninput="updateParam('electron_damping')">
-                </div>
-            </div>
-        </div>
-
         <div class="canvas-wrapper">
-            <canvas id="particleCanvas" style="width: 100%; height: 100%;"></canvas>
+            <div id="status" class="loading">Cargando WebAssembly...</div>
+            <canvas id="particleCanvas" width="1400" height="800" style="display:none; max-width: 100%; max-height: 100%;"></canvas>
         </div>
 
         <div class="info-sidebar">
