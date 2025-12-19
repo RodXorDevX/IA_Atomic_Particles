@@ -8,10 +8,12 @@
     "build": "npm run build-wasm && vite build",
     "dev": "npm run build-wasm && vite",
     "preview": "vite preview",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "npm run build && gh-pages -d dist",
+    "vercel-build": "npm run build-wasm"
   },
   "dependencies": {},
   "devDependencies": {
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "wasm-pack": "^0.12.1"
   }
 }

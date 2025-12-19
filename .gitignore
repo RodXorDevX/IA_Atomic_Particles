@@ -16,7 +16,7 @@ dist-ssr
 # Rust & WebAssembly
 target/
 Cargo.lock
-pkg/
+# pkg/  # <- Comentado para incluir en despliegue
 *.wasm
 wasm-pack.log
 **/*.rs.bk
