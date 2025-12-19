@@ -462,79 +462,72 @@
 
                 console.log('🔗 Intentando acceder a:', window.location.origin + wasmUrl);
 
-                try {
-                    const response = await fetch(wasmUrl);
-                    console.log('📊 Respuesta WASM:', response.status, response.statusText);
-                    console.log('📄 Headers:', Object.fromEntries(response.headers.entries()));
+                const response = await fetch(wasmUrl);
+                console.log('📊 Respuesta WASM:', response.status, response.statusText);
+                console.log('📄 Headers:', Object.fromEntries(response.headers.entries()));
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    const contentLength = response.headers.get('content-length');
-                    console.log('📏 Tamaño del archivo:', contentLength, 'bytes');
-
-                    if (parseInt(contentLength) < 1000) {
-                        console.warn('⚠️  Archivo WASM parece muy pequeño');
-                    }
-
-                    console.log('✅ Archivo .wasm accesible');
-                } catch (error) {
-                    console.error('❌ Error accediendo al archivo .wasm:', error);
-                    console.error('🔍 Verificando URL completa:', window.location.href + wasmUrl);
-                    throw error;
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+
+                const contentLength = response.headers.get('content-length');
+                console.log('📏 Tamaño del archivo:', contentLength, 'bytes');
+
+                if (parseInt(contentLength) < 1000) {
+                    console.warn('⚠️  Archivo WASM parece muy pequeño');
+                }
+
+                console.log('✅ Archivo .wasm accesible');
 
                 // Usar la inicialización estándar de wasm-bindgen
                 console.log('📦 Cargando módulo WebAssembly...');
                 console.log('🔗 Intentando importar desde:', jsUrl);
 
-                try {
-                    const { SimulationEngine, default: init } = await import(jsUrl);
-                    console.log('✅ Módulo cargado exitosamente');
-                    console.log('🔧 Funciones disponibles:', typeof SimulationEngine, typeof init);
+                const { SimulationEngine, default: init } = await import(jsUrl);
+                console.log('✅ Módulo cargado exitosamente');
+                console.log('🔧 Funciones disponibles:', typeof SimulationEngine, typeof init);
 
-                    // Inicializar el módulo WebAssembly
-                    console.log('🔧 Inicializando WebAssembly...');
-                    await init();
-                    console.log('✅ WebAssembly inicializado correctamente');
+                // Inicializar el módulo WebAssembly
+                console.log('🔧 Inicializando WebAssembly...');
+                await init();
+                console.log('✅ WebAssembly inicializado correctamente');
 
-                    canvas = document.getElementById('particleCanvas');
-                    ctx = canvas.getContext('2d');
+                canvas = document.getElementById('particleCanvas');
+                ctx = canvas.getContext('2d');
 
-                    // Establecer dimensiones del canvas para que coincidan con su tamaño mostrado
-                    const rect = canvas.getBoundingClientRect();
-                    canvas.width = rect.width;
-                    canvas.height = rect.height;
+                // Establecer dimensiones del canvas para que coincidan con su tamaño mostrado
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
 
-                    engine = new SimulationEngine(canvas.width, canvas.height);
+                engine = new SimulationEngine(canvas.width, canvas.height);
 
-                    // Initial particles
-                    const centerX = canvas.width / 2;
-                    const centerY = canvas.height / 2;
-                    engine.add_particle(centerX, centerY, 0);
-                    engine.add_particle(centerX + 50, centerY, 1);
+                // Initial particles
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                engine.add_particle(centerX, centerY, 0);
+                engine.add_particle(centerX + 50, centerY, 1);
 
-                    canvas.style.display = 'block';
+                canvas.style.display = 'block';
 
-                    // Generar tabla periódica después de cargar todo
-                    console.log('Generando tabla periódica...');
-                    generatePeriodicTable();
-                    console.log('Tabla periódica generada');
+                // Generar tabla periódica después de cargar todo
+                console.log('Generando tabla periódica...');
+                generatePeriodicTable();
+                console.log('Tabla periódica generada');
 
-                    isRunning = true;
-                    animate();
+                isRunning = true;
+                animate();
 
-                } catch (err) {
-                    const statusElement = document.getElementById('status');
-                    if (statusElement) {
-                        statusElement.innerHTML = `❌ Error: ${err.message}`;
-                        statusElement.style.color = '#f44336';
-                        statusElement.style.display = 'block';
-                    }
-                    console.error('Error loading WASM:', err);
-                    console.error('Stack:', err.stack);
+            } catch (err) {
+                const statusElement = document.getElementById('status');
+                if (statusElement) {
+                    statusElement.innerHTML = `❌ Error: ${err.message}`;
+                    statusElement.style.color = '#f44336';
+                    statusElement.style.display = 'block';
                 }
+                console.error('Error loading WASM:', err);
+                console.error('Stack:', err.stack);
+            }
         }
 
         function animate() {
