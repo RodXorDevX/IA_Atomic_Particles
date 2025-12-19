@@ -4,12 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build-wasm": "wasm-pack build . --target web",
+    "build-wasm": "wasm-pack build . --target bundler --out-dir pkg",
     "build": "npm run build-wasm && vite build",
     "dev": "npm run build-wasm && vite",
     "preview": "vite preview",
     "deploy": "npm run build && gh-pages -d dist",
-    "vercel-build": "npm run build-wasm"
+    "vercel-build": "echo 'Starting WebAssembly build for Vercel...' && npm run build-wasm && echo 'WebAssembly build completed successfully'"
   },
   "dependencies": {},
   "devDependencies": {
