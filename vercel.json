@@ -1,7 +1,7 @@
 {
   "version": 2,
   "framework": null,
-  "buildCommand": "npm run vercel-build",
+  "buildCommand": "echo 'Using pre-compiled WebAssembly files'",
   "outputDirectory": ".",
   "installCommand": "npm install",
   "rewrites": [
