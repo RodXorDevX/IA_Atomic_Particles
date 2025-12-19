@@ -41,6 +41,7 @@ Thumbs.db
 
 # Excepciones (NO ignorar)
 !.env.example
+!.env.production
 
 # Otros archivos temporales
 *.ntvs*
