@@ -1,10 +1,10 @@
 # ⚛️ Simulación de Núcleos Atómicos - Física Cuántica Interactiva
 
-[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-success)](ia-atomic-particles.vercel.app)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployed-success)](https://ia-atomic-particles.vercel.app/)
 [![Rust](https://img.shields.io/badge/Rust-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![WebAssembly](https://img.shields.io/badge/WebAssembly-654FF0?logo=webassembly&logoColor=white)](https://webassembly.org/)
 
-> **🔗 [Ver Demo en Vivo](https://ia-atomic-particles-96asm6o8c-rod-xors-projects.vercel.app/)**
+> **🔗 [Ver Demo en Vivo](https://ia-atomic-particles.vercel.app/)**
 
 Una simulación interactiva avanzada de física nuclear y atómica que combina **Rust**, **WebAssembly** y **JavaScript** para crear una experiencia educativa inmersiva. Explora la formación de núcleos atómicos, fuerzas fundamentales y la tabla periódica completa.
 
