@@ -58,7 +58,7 @@ IA_Atomic_Particles/
 ## 🚀 Instalación y Uso
 
 ### **Opción 1: Demo en Vivo (Recomendado)**
-👉 **[https://ia-atomic-particles-96asm6o8c-rod-xors-projects.vercel.app/](https://ia-atomic-particles-96asm6o8c-rod-xors-projects.vercel.app/)**
+👉 **[https://ia-atomic-particles.vercel.app/](https://ia-atomic-particles.vercel.app/)**
 
 ### **Opción 2: Instalación Local**
 
@@ -157,4 +157,4 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **⭐ Si te gusta este proyecto, ¡dale una estrella en GitHub!**
 
-**🔗 [Ver Demo Interactiva](https://ia-atomic-particles-96asm6o8c-rod-xors-projects.vercel.app/)**
+**🔗 [Ver Demo Interactiva](https://ia-atomic-particles.vercel.app/)**
